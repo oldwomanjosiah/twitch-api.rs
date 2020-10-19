@@ -1,5 +1,5 @@
 use crate::response::BadRequest;
-use log::{error, info, warn};
+use log::{error, info};
 use reqwest::{self, header::HeaderMap, Client};
 use serde::{Deserialize, Serialize};
 
