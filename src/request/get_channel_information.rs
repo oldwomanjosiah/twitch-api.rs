@@ -34,8 +34,7 @@ pub enum PossibleChannelInformationResponse {
 ///
 /// # Usage
 ///
-/// ```
-/// # use crate::twitch::response::*;
+/// ```ignore
 /// let resp = ChannelInformationRequest::builder()
 ///     .channel_name(String::from("nikeairjordan9"))
 ///     .build()
