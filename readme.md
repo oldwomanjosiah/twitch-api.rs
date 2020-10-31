@@ -4,6 +4,8 @@ Note: this library only covers the three apis on the critical path for my other 
 
 # twitch-api
 
+[Crates.io](https://crates.io/crates/twitch-api-rs)
+
 A Small Crate to query the twitch public api (helix)
 
 -------
