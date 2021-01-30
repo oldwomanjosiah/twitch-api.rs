@@ -4,51 +4,9 @@
 //!
 //! [`Twitch Auth Documentation`]: https://dev.twitch.tv/docs/authentication
 
-pub use token::{AppAccessToken, UserAccessToken};
-
-/// Types that represent Authorization Tokens
-pub mod token {
-
-    use serde::{Deserialize, Serialize};
-
-    /// Can be formatted as a header string
-    pub trait AsHeader {
-        /// Get as as a header string
-        fn as_header(&self) -> String;
-    }
-
-    /// [`OIDC`] code flow is not yet supported, but is planned for the future
-    ///
-    /// [`OIDC`]: https://goteleport.com/blog/how-oidc-authentication-works/
-    #[derive(Debug, PartialEq, Serialize, Deserialize)]
-    pub struct OIDC();
-
-    /// User-Specific OAuth Token to be used with requests that return information
-    /// private to a specific user.
-    ///
-    /// OAuth authorization
-    #[derive(Debug, PartialEq, Serialize, Deserialize)]
-    pub struct UserAccessToken(String);
-
-    impl AsHeader for UserAccessToken {
-        fn as_header(&self) -> String {
-            format!("Authorization: Bearer {}", self.0)
-        }
-    }
-
-    /// Application Token to be used with requests that do not return information
-    /// specific to any user.
-    ///
-    /// Bearer authorization
-    #[derive(Debug, PartialEq, Serialize, Deserialize)]
-    pub struct AppAccessToken(String);
-
-    impl AsHeader for AppAccessToken {
-        fn as_header(&self) -> String {
-            format!("Authorization: Bearer {}", self.0)
-        }
-    }
-}
+/// Represents a authorization token of some type that can be sent as a header to a
+/// twitch endpoint.
+pub trait AuthToken: crate::requests::Headers {}
 
 /// [`Implicit Code`] Flow
 ///
@@ -110,6 +68,8 @@ pub mod client_credentials {
         scopes: Vec<String>, // TODO change to list of Scope Enum items or maybe bitset that has display trait and named bits
     }
 
+    impl ParametersExt for ClientAuthRequestParams {}
+
     #[derive(Debug)]
     /// Request for the [`client authentication`] flow.  
     /// See module level documentation for usage.
@@ -134,12 +94,6 @@ pub mod client_credentials {
             // TODO Serialize vec as space separated list
 
             map.end()
-        }
-    }
-
-    impl Parameters for ClientAuthRequestParams {
-        fn write_parameters(&self, req: RequestBuilder) -> RequestBuilder {
-            req.query(self)
         }
     }
 
@@ -237,4 +191,30 @@ pub mod client_credentials {
             (self.access_token, self.expires_in)
         }
     }
+
+    /// Represents an authorization token header for requests
+    #[derive(Debug)]
+    pub struct ClientAuthToken {
+        pub(crate) token: String,
+        pub(crate) client_id: String,
+    }
+
+    impl ClientAuthToken {
+        /// Create the auth token from a sucessful auth response and a client_id
+        pub fn from_client(auth_response: ClientAuthResponse, client_id: String) -> Self {
+            Self {
+                token: auth_response.access_token,
+                client_id,
+            }
+        }
+    }
+
+    impl Headers for ClientAuthToken {
+        fn write_headers(&self, req: RequestBuilder) -> RequestBuilder {
+            req.header("Authorization", format!("Bearer {}", self.token))
+                .header("Client-Id", &self.client_id)
+        }
+    }
+
+    impl super::AuthToken for ClientAuthToken {}
 }
