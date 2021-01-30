@@ -13,9 +13,19 @@ A Small Crate to query the twitch public api (helix)
 To run the integration tests you need to set the environment variables with valid
 values from the [twitch developer console](https://dev.twitch.tv/console).
 
+```bash
+TWITCH_API_RS_TEST_CLIENT_ID=<client_id> /
+TWITCH_API_RS_TEST_CLIENT_SECRET=<client_secret> /
+cargo test -- --nocapture
 ```
-TWITCH_API_RS_TEST_CLIENT_ID=<client_id>
-TWITCH_API_RS_TEST_CLIENT_SECRET=<client_secret>
+
+If you use [cargo-make](https://crates.io/crates/cargo-make) you can also add the following to your `Makefile.toml`
+
+```toml
+[tasks.test-env]
+env = { "TWITCH_API_RS_TEST_CLIENT_ID" = "<client_id>", "TWITCH_API_RS_TEST_CLIENT_SECRET" = "<client_secret>" }
+command = "cargo"
+args = [ "test", "--", "--nocapture" ]
 ```
 
 -------
