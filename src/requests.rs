@@ -9,16 +9,6 @@ use reqwest::RequestBuilder;
 use serde::de::DeserializeOwned;
 use thiserror::Error;
 
-/// Returned in the case that a query parameter or the request body was missing or malformed
-pub const BAD_REQUEST_CODE: u16 = 400;
-
-/// Returned in the case that the authentication was invalid for some reason
-pub const AUTH_ERROR: u16 = 401;
-
-/// Returned in the case of an upstream error, try again once and then assume
-/// temporary problems on server side.
-pub const SERVER_ERROR: u16 = 500;
-
 /// Used in place of [`Headers`], [`Parameters`] or [`Body`] to inidicate for the
 /// respective type that there is none
 type None = ();
@@ -69,14 +59,6 @@ impl<E: ErrorCodes> From<FailureStatus<u16>> for RequestError<E> {
         }
     }
 }
-
-/*
-impl FailureStatus {
-    fn into_status<S: ErrorCodes>(self) -> S {
-        S::from_status(self)
-    }
-}
-*/
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
@@ -130,14 +112,15 @@ pub enum RequestError<C: ErrorCodes + 'static> {
     UnknownError(#[from] Box<dyn std::error::Error>),
 }
 
-/// Error codes that can be used in [`ReqwestError::ErrorCodes`], can be built
-/// from a [`reqwest::StatusCode`].
-pub trait ErrorCodes: std::error::Error + Sized + DeserializeOwned {
+/// Represents A Known set of error status codes that an endpoint may return.o
+///
+/// See src for [`CommonResponseCodes`] for example of implementation using thiserror
+pub trait ErrorCodes: std::error::Error + Sized + DeserializeOwned + Copy {
     /// Possibly mark the status as a known status of this kind, used by [`RequestError`]
     fn from_status(codes: FailureStatus<u16>) -> Result<FailureStatus<Self>, FailureStatus<u16>>;
 }
 
-#[derive(Debug, Error, Deserialize)]
+#[derive(Debug, Clone, Copy, Error, Deserialize)]
 /// Error codes used by twitch that are the same across most endpoints.
 pub enum CommonResponseCodes {
     #[error("400: Malformed Request")]
@@ -154,27 +137,33 @@ pub enum CommonResponseCodes {
     ServerErrorCode,
 }
 
-impl ErrorCodes for CommonResponseCodes {
-    fn from_status(codes: FailureStatus<u16>) -> Result<FailureStatus<Self>, FailureStatus<u16>> {
-        match codes.status {
-            BAD_REQUEST_CODE => Ok(FailureStatus::<Self> {
-                status: Self::BadRequestCode,
-                message: codes.message,
-            }),
-            AUTH_ERROR => Ok(FailureStatus::<Self> {
-                status: Self::AuthErrorCode,
-                message: codes.message,
-            }),
-            SERVER_ERROR => Ok(FailureStatus::<Self> {
-                status: Self::ServerErrorCode,
-                message: codes.message,
-            }),
-
-            // Unknown error
-            _ => Err(codes),
+#[macro_export]
+/// Generate a [`ErrorCodes`] impl block for a given Enum by mapping known status codes
+/// to specific variants. Variants must not be struct variants
+macro_rules! response_codes {
+    ($for:ty : [$($val:expr => $item:path),+]) => {
+        impl ErrorCodes for $for {
+            fn from_status(codes: FailureStatus<u16>) -> Result<FailureStatus<Self>, FailureStatus<u16>> {
+                match codes.status {
+                $(
+                    $val => Ok(FailureStatus::<Self> {
+                        status: $item,
+                        message: codes.message
+                    }),
+                )*
+                    _ => Err(codes),
+                }
+            }
         }
     }
 }
+
+response_codes!(
+    CommonResponseCodes: [
+        400 => CommonResponseCodes::BadRequestCode,
+        401 => CommonResponseCodes::AuthErrorCode,
+        500 => CommonResponseCodes::ServerErrorCode
+]);
 
 /// Headers for a request
 pub trait Headers {
