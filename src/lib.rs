@@ -9,6 +9,23 @@
 
 pub mod auth;
 pub mod requests;
+pub mod resource;
 
 /// Common functions any types used in most application
 pub mod prelude {}
+
+mod crate_prelude {
+    pub fn as_space_list<'a, L, T>(l: L) -> String
+    where
+        L: AsRef<[T]>,
+        T: AsRef<str>,
+    {
+        let cap = l.as_ref().iter().fold(0, |a, e| a + e.as_ref().len());
+        l.as_ref()
+            .iter()
+            .fold(String::with_capacity(cap), |mut s, e| {
+                s.push_str(e.as_ref());
+                s
+            })
+    }
+}
