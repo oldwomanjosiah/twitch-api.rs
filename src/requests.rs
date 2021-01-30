@@ -43,19 +43,40 @@ impl Body for None {
 
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Error)]
+#[error("Status error: {status} with message {message}")]
 /// Represents a sucessful request that was denied by the twitch api for some reason.
 /// Use request's associated [`ErrorCodes`] to get matchable value.
-pub struct FailureStatus {
-    status: u16,
-    message: String,
+pub struct FailureStatus<S>
+where
+    S: DeserializeOwned + std::fmt::Display + std::fmt::Debug + 'static,
+{
+    #[serde(bound(deserialize = "S: DeserializeOwned"))]
+    /// The status code of the Failure
+    ///
+    /// If S is ErrorCodes then this is a known error for this request, if u16 then it is not known
+    pub status: S,
+
+    /// The message twitch sent with the error
+    pub message: String,
 }
 
+impl<E: ErrorCodes> From<FailureStatus<u16>> for RequestError<E> {
+    fn from(failure: FailureStatus<u16>) -> Self {
+        match E::from_status(failure) {
+            Ok(known) => RequestError::KnownErrorStatus(known),
+            Err(unkn) => RequestError::UnkownErrorStatus(unkn),
+        }
+    }
+}
+
+/*
 impl FailureStatus {
     fn into_status<S: ErrorCodes>(self) -> S {
         S::from_status(self)
     }
 }
+*/
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
@@ -70,14 +91,14 @@ where
     Response(R),
 
     /// Response that was denied by the twitch service
-    Failure(FailureStatus),
+    Failure(FailureStatus<u16>),
 }
 
 impl<R> PossibleResponse<R>
 where
     R: Response + 'static,
 {
-    fn into_result(self) -> Result<R, FailureStatus> {
+    fn into_result(self) -> Result<R, FailureStatus<u16>> {
         match self {
             Self::Response(r) => Ok(r),
             Self::Failure(f) => Err(f),
@@ -92,9 +113,13 @@ pub enum RequestError<C: ErrorCodes + 'static> {
     /// Could not try to make request because it was malformed in some way
     MalformedRequest(String),
 
-    #[error("Response code was an error: {0}")]
-    /// Server responded with some error code
-    ErrorCodes(#[from] C),
+    #[error("Known Error enountered: {0}")]
+    /// Encountered a known error status, match on `0.status` for all `C::*`
+    KnownErrorStatus(FailureStatus<C>),
+
+    #[error("Unknown Error enountered: {0}")]
+    /// Encountered an unknown error status from twitch
+    UnkownErrorStatus(FailureStatus<u16>),
 
     #[error("Reqwest encountered an error: {0}")]
     /// Reqwest could not complete the request for some reason
@@ -107,13 +132,12 @@ pub enum RequestError<C: ErrorCodes + 'static> {
 
 /// Error codes that can be used in [`ReqwestError::ErrorCodes`], can be built
 /// from a [`reqwest::StatusCode`].
-pub trait ErrorCodes: std::error::Error + Sized {
-    /// Should return `Ok(())` this type does not catch the status code,
-    /// otherwise return `Err(Self)` where self contains information on the failure
-    fn from_status(codes: FailureStatus) -> Self;
+pub trait ErrorCodes: std::error::Error + Sized + DeserializeOwned {
+    /// Possibly mark the status as a known status of this kind, used by [`RequestError`]
+    fn from_status(codes: FailureStatus<u16>) -> Result<FailureStatus<Self>, FailureStatus<u16>>;
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Deserialize)]
 /// Error codes used by twitch that are the same across most endpoints.
 pub enum CommonResponseCodes {
     #[error("400: Malformed Request")]
@@ -128,19 +152,26 @@ pub enum CommonResponseCodes {
     /// Twitch may be experiencing internal errors, if encountered the request should
     /// be retried once. If that fails then assume twitch is temporarily down.
     ServerErrorCode,
-
-    #[error("{0}: Other error with message {1}")]
-    /// Other / unexpected error
-    Other(u16, String),
 }
 
 impl ErrorCodes for CommonResponseCodes {
-    fn from_status(codes: FailureStatus) -> Self {
+    fn from_status(codes: FailureStatus<u16>) -> Result<FailureStatus<Self>, FailureStatus<u16>> {
         match codes.status {
-            AUTH_ERROR => Self::AuthErrorCode,
-            BAD_REQUEST_CODE => Self::BadRequestCode,
-            SERVER_ERROR => Self::ServerErrorCode,
-            c => Self::Other(c, codes.message),
+            BAD_REQUEST_CODE => Ok(FailureStatus::<Self> {
+                status: Self::BadRequestCode,
+                message: codes.message,
+            }),
+            AUTH_ERROR => Ok(FailureStatus::<Self> {
+                status: Self::AuthErrorCode,
+                message: codes.message,
+            }),
+            SERVER_ERROR => Ok(FailureStatus::<Self> {
+                status: Self::ServerErrorCode,
+                message: codes.message,
+            }),
+
+            // Unknown error
+            _ => Err(codes),
         }
     }
 }
@@ -240,25 +271,10 @@ pub trait Request {
         // send
         let resp = req.send().await?;
 
-        // TODO deserialize into possible response untagged enum and return correct error codes if
-        // failed with status
-
-        /*match resp
-            .json::<Result<Self::Response, FailureStatus<Self::ErrorCodes>>>()
-            .await?
-        {
-            PossibleResponse::Response(r) => Ok(r),
-            PossibleResponse::Failure(f) => Self::ErrorCodes::from_status(f)
-                .map(|_| unreachable!())
-                .map_err(|e| RequestError::ErrorCodes(e)),
-        }*/
-
         resp.json::<PossibleResponse<Self::Response>>()
             .await?
             .into_result()
-            .map_err(|e| {
-                RequestError::ErrorCodes(FailureStatus::into_status::<Self::ErrorCodes>(e))
-            })
+            .map_err(FailureStatus::into)
     }
 }
 
