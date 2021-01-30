@@ -171,16 +171,53 @@ pub trait Headers {
     fn write_headers(&self, req: RequestBuilder) -> RequestBuilder;
 }
 
+/// Marker trait for auto implementation of headers
+///
+/// Must be able to borrow as a map of header names to values
+pub trait HeadersExt {
+    /// Borrow the object as map from header names to values
+    fn as_ref<'a>(&'a self) -> &'a [(&'a str, &'a str)];
+}
+
+impl<T: HeadersExt> Headers for T {
+    fn write_headers<'a>(&'a self, mut req: RequestBuilder) -> RequestBuilder {
+        for (a, b) in self.as_ref() {
+            req = req.header(*a, *b);
+        }
+        req
+    }
+}
+
 /// Parameters for a request
 pub trait Parameters {
     /// Write parameters to request builder and return request builder
     fn write_parameters(&self, req: RequestBuilder) -> RequestBuilder;
 }
 
+/// Marker trait for auto implementation of Parameters for types that implement
+/// [`serde::Serialize`]
+pub trait ParametersExt: serde::Serialize {}
+
+impl<T: ParametersExt> Parameters for T {
+    fn write_parameters(&self, req: RequestBuilder) -> RequestBuilder {
+        req.query(self)
+    }
+}
+
 /// Body for a request
 pub trait Body {
     /// Write body to request builder and return request builder
     fn write_body(&self, req: RequestBuilder) -> RequestBuilder;
+}
+
+/// Marker trait for auto implementation of Body for types that implement
+/// [`serde::Serialize`]
+pub trait BodyExt: serde::Serialize {}
+
+impl<T: BodyExt> Body for T {
+    fn write_body(&self, req: RequestBuilder) -> RequestBuilder {
+        req.json(self)
+    }
 }
 
 /// Represents a request that can be made to the twitch api
