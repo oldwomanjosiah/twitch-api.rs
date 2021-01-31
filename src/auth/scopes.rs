@@ -97,7 +97,7 @@ macro_rules! ident {
 }
 // }}}
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 /// Represents a set of scopes available with a specific bearer auth key
 pub struct ScopeSet {
     scopes: u32,

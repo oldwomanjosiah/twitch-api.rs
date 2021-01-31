@@ -8,9 +8,49 @@ pub mod scopes;
 
 /// Represents a authorization token of some type that can be sent as a header to a
 /// twitch endpoint.
-pub trait AuthToken: crate::requests::Headers {
+pub trait AuthToken: crate::requests::Headers + Clone {
     /// Get the set of scopes that this token has associated with it
     fn scopes(&self) -> &scopes::ScopeSet;
+}
+
+use reqwest::RequestBuilder;
+use std::rc::Rc;
+use std::sync::Arc;
+
+impl<H> crate::requests::Headers for Arc<H>
+where
+    H: crate::requests::Headers,
+{
+    fn write_headers(&self, req: RequestBuilder) -> RequestBuilder {
+        self.as_ref().write_headers(req)
+    }
+}
+
+impl<A> AuthToken for Arc<A>
+where
+    A: AuthToken,
+{
+    fn scopes(&self) -> &scopes::ScopeSet {
+        self.as_ref().scopes()
+    }
+}
+
+impl<H> crate::requests::Headers for Rc<H>
+where
+    H: crate::requests::Headers,
+{
+    fn write_headers(&self, req: RequestBuilder) -> RequestBuilder {
+        self.as_ref().write_headers(req)
+    }
+}
+
+impl<A> AuthToken for Rc<A>
+where
+    A: AuthToken,
+{
+    fn scopes(&self) -> &scopes::ScopeSet {
+        self.as_ref().scopes()
+    }
 }
 
 /// [`Implicit Code`] Flow
@@ -200,7 +240,7 @@ pub mod client_credentials {
     use super::scopes::ScopeSet;
 
     /// Represents an authorization token header for requests
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     #[allow(missing_docs)]
     pub struct ClientAuthToken {
         scopes: ScopeSet,
