@@ -3,5 +3,6 @@
 //!
 //! [`API Reference`]: https://dev.twitch.tv/docs/api/reference
 
+pub mod channels;
 pub mod clips;
 pub mod users;
