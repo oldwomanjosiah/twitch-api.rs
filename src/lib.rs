@@ -12,11 +12,20 @@ pub mod requests;
 pub mod resource;
 pub mod values;
 
-/// Common functions any types used in most application
-pub mod prelude {}
+/// Common functions and types used in most application
+pub mod prelude {
+    /// Trait used by many endpoints for authentication and scopes
+    pub use crate::auth::AuthToken;
+
+    /// Trait that exposes methods common to all requests, required to use
+    /// `.make_request(&client).await`
+    pub use crate::requests::Request;
+
+    /// Types produced and consumed by endpoints
+    pub use crate::values;
+}
 
 mod crate_prelude {
-
     pub use crate::auth::{self, AuthToken};
     pub use crate::requests::*;
     pub use reqwest::Method;
