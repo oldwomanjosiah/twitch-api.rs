@@ -24,7 +24,7 @@ async fn get_users_correct() {
 
     let resp2 = match GetUsersRequest::builder()
         .set_auth(token)
-        .add_login("TheHoodlum12")
+        .add_login("TheHoodlum12".to_string())
         .make_request(&client)
         .await
     {
@@ -110,7 +110,7 @@ async fn too_many_arguments() {
 
     for _ in 0..101 {
         // Set too many search requests
-        req.add_login("TheHoodlum12");
+        req.add_login("TheHoodlum12".to_string());
     }
 
     let error = match req.set_auth(token)
@@ -153,8 +153,8 @@ async fn no_auth_specified() {
     };
 
     match error {
-        RequestError::MalformedRequest(msg) => {
-            eprintln!("Failed correctly with message {}", msg);
+        RequestError::MissingAuth => {
+            eprintln!("Failed correctly by returning MissingAuth");
             return;
         }
         e => unreachable!(

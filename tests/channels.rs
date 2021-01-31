@@ -15,7 +15,7 @@ async fn get_channel_information() {
     let user = {
         match GetUsersRequest::builder()
             .set_auth(auth.clone())
-            .add_login("TheHoodlum12")
+            .add_login("TheHoodlum12".to_string())
             .make_request(client.clone())
             .await
         {
