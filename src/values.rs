@@ -1,6 +1,7 @@
 //! Wrappers for basic owned types that indicate their usage
 #![allow(missing_docs)]
 
+// {{{ macros
 #[macro_export]
 #[doc(hidden)]
 macro_rules! field_wrapper_name {
@@ -57,6 +58,8 @@ macro_rules! from_inner {
     }
 }
 
+// }}}
+
 use serde::{Deserialize, Serialize};
 
 /// Values for broadcaster objects and requests
@@ -64,19 +67,19 @@ pub mod broadcasters {
     use super::*;
 
     #[repr(transparent)]
-    #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
     #[serde(transparent)]
     /// The id number of a broadcaster object
     pub struct BroadcasterId(String);
 
     #[repr(transparent)]
-    #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
     #[serde(transparent)]
     /// The display name of a channel object
     pub struct BroadcasterName(String);
 
     #[repr(transparent)]
-    #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
     #[serde(transparent)]
     /// The language of a broadcaster object
     pub struct BroadcasterLanguage(ISOLanguage);
@@ -105,12 +108,12 @@ pub mod games {
     use super::*;
 
     #[repr(transparent)]
-    #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
     #[serde(transparent)]
     pub struct GameName(String);
 
     #[repr(transparent)]
-    #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
     #[serde(transparent)]
     /// The ID number of a game on twitch
     pub struct GameId(String);
@@ -129,7 +132,7 @@ pub mod extensions {
     use super::*;
 
     #[repr(transparent)]
-    #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
     #[serde(transparent)]
     /// The id assined to an extension when it was created
     pub struct ExtensionId(String);
@@ -147,17 +150,17 @@ pub mod clips {
     use super::*;
 
     #[repr(transparent)]
-    #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
     #[serde(transparent)]
     pub struct ClipId(String);
 
     #[repr(transparent)]
-    #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
     #[serde(transparent)]
     pub struct ClipTitle(String);
 
     #[repr(transparent)]
-    #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
     #[serde(transparent)]
     pub struct ViewCount(u32);
 
@@ -177,12 +180,12 @@ pub mod users {
     use super::*;
 
     #[repr(transparent)]
-    #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
     #[serde(transparent)]
     pub struct UserId(String);
 
     #[repr(transparent)]
-    #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
     #[serde(transparent)]
     pub struct UserName(String);
 
@@ -200,12 +203,12 @@ pub mod videos {
     use super::*;
 
     #[repr(transparent)]
-    #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
     #[serde(transparent)]
     pub struct VideoId(String);
 
     #[repr(transparent)]
-    #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
     #[serde(transparent)]
     pub struct VideoLanguage(ISOLanguage);
 
@@ -218,7 +221,7 @@ pub mod videos {
     from_inner![(VideoId, String), (VideoLanguage, ISOLanguage)];
 }
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 /// A Pagination key for enpoints that may return more than 100 results
 pub struct Pagination {
     pub cursor: Option<String>,
@@ -233,13 +236,13 @@ impl From<String> for Pagination {
 }
 
 #[repr(transparent)]
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(transparent)]
 /// The max amount returned per page, used in requests like
 /// [`crate::resource::clips::get_clips::GetClipsRequest`]
 pub struct Count(u32);
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 /// Represents a time window
 pub struct Period {
     pub started_at: StartedAt,
@@ -247,7 +250,7 @@ pub struct Period {
 }
 
 #[repr(transparent)]
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(transparent)]
 /// Represents a [`RFC3339`] formatted datetime
 ///
@@ -255,19 +258,19 @@ pub struct Period {
 pub struct RFC3339Time(String);
 
 #[repr(transparent)]
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(transparent)]
 /// Represents the beginning of a time window
 pub struct StartedAt(RFC3339Time);
 
 #[repr(transparent)]
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(transparent)]
 /// Represents the end of a time window
 pub struct EndedAt(RFC3339Time);
 
 #[repr(transparent)]
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(transparent)]
 /// Represents a language, either a [`ISO 639-1`] two-letter language code or 'other'
 ///
@@ -275,7 +278,7 @@ pub struct EndedAt(RFC3339Time);
 pub struct ISOLanguage(String);
 
 #[repr(transparent)]
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct Url(String);
 
@@ -308,6 +311,6 @@ from_inner![
 
 /// Used to indicated that this type is used a field value
 pub trait FieldValue {
-    /// Get the name of a field of this type that twitch is expecting
+    /// Get the commonly used name of a field of this type that twitch is expecting
     fn field_name() -> &'static str;
 }
