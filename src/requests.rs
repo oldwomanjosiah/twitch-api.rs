@@ -95,6 +95,10 @@ pub enum RequestError<C: ErrorCodes + 'static> {
     /// Could not try to make request because it was malformed in some way
     MalformedRequest(String),
 
+    #[error("Did not have user scopes required {0:?}")]
+    /// Did not have the correct user scopes available to make request.
+    ScopesError(Vec<String>),
+
     #[error("Known Error enountered: {0}")]
     /// Encountered a known error status, match on `0.status` for all `C::*`
     KnownErrorStatus(FailureStatus<C>),
@@ -293,6 +297,8 @@ pub trait Request {
         req = self.headers().write_headers(req);
         req = self.parameters().write_parameters(req);
         req = self.body().write_body(req);
+
+        log::info!("Making request {:#?}", req);
 
         // send
         let resp = req.send().await?;
