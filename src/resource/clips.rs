@@ -2,25 +2,32 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::values::*;
+use broadcasters::*;
+use clips::*;
+use games::GameId;
+use users::*;
+use videos::VideoId;
+
 #[derive(Debug, Serialize, Deserialize)]
 #[allow(missing_docs)]
 /// Information relating to a single clip resource
 pub struct ClipInfo {
-    pub broadcaster_id: String,
-    pub broadcaster_name: String,
-    pub created_at: String,
-    pub creator_id: String,
-    pub creator_name: String,
-    pub embed_url: String,
-    pub game_id: String,
+    pub broadcaster_id: BroadcasterId,
+    pub broadcaster_name: BroadcasterName,
+    pub created_at: RFC3339Time,
+    pub creator_id: UserId,
+    pub creator_name: UserName,
+    pub embed_url: Url,
+    pub game_id: GameId,
     #[serde(rename = "id")]
-    pub clip_id: String,
-    pub language: String,
-    pub thumbnail_url: String,
-    pub title: String,
-    pub url: String,
-    pub video_id: String,
-    pub view_count: u64,
+    pub clip_id: ClipId,
+    pub language: ISOLanguage,
+    pub thumbnail_url: Url,
+    pub title: ClipTitle,
+    pub url: Url,
+    pub video_id: VideoId,
+    pub view_count: ViewCount,
 }
 
 /// Request to the [`Get Clips`] endpoint
@@ -50,8 +57,8 @@ pub struct ClipInfo {
 /// }
 /// ```
 pub mod get_clips {
-
     use super::ClipInfo;
+    use super::*;
     use crate::auth::AuthToken;
     use crate::requests::*;
     use serde::{Deserialize, Serialize};
@@ -59,8 +66,8 @@ pub mod get_clips {
     #[derive(Debug)]
     enum PaginationDirection {
         None,
-        Before(String),
-        After(String),
+        Before(Pagination),
+        After(Pagination),
     }
 
     impl Default for PaginationDirection {
@@ -75,9 +82,9 @@ pub mod get_clips {
     #[derive(Debug)]
     enum QueryType {
         Unset,
-        BroadCasterId(String),
-        GameId(String),
-        ClipId(Vec<String>),
+        BroadCasterId(BroadcasterId),
+        GameId(GameId),
+        ClipId(Vec<ClipId>),
     }
 
     impl Default for QueryType {
@@ -97,8 +104,8 @@ pub mod get_clips {
         auth: Option<A>,
         query_type: QueryType,
         pagination: PaginationDirection,
-        count: Option<u32>,
-        period: Option<(String, Option<String>)>,
+        count: Option<Count>,
+        period: Option<(StartedAt, Option<EndedAt>)>,
     }
 
     impl<A> Serialize for GetClipsRequest<A>
@@ -117,17 +124,25 @@ pub mod get_clips {
                 QueryType::GameId(id) => map.serialize_entry("game_id", &id)?,
                 QueryType::BroadCasterId(id) => map.serialize_entry("broadcaster_id", &id)?,
                 QueryType::ClipId(ids) => {
-                    use crate::crate_prelude::as_space_list;
-                    let ids = as_space_list(ids);
-                    map.serialize_entry("id", &ids)?;
+                    for id in ids {
+                        map.serialize_entry("id", &id)?;
+                    }
                 }
             }
 
             // Optional params
             match &self.pagination {
                 PaginationDirection::None => (),
-                PaginationDirection::Before(pag) => map.serialize_entry("before", &pag)?,
-                PaginationDirection::After(pag) => map.serialize_entry("after", &pag)?,
+                PaginationDirection::Before(pag) => {
+                    if pag.cursor.is_some() {
+                        map.serialize_entry("before", &pag.cursor)?
+                    }
+                }
+                PaginationDirection::After(pag) => {
+                    if pag.cursor.is_some() {
+                        map.serialize_entry("after", &pag.cursor)?
+                    }
+                }
             }
 
             if let Some(count) = &self.count {
@@ -149,7 +164,7 @@ pub mod get_clips {
 
     impl<A> Request for GetClipsRequest<A>
     where
-        A: AuthToken,
+        A: AuthToken + Sync,
     {
         const ENDPOINT: &'static str = "https://api.twitch.tv/helix/clips";
         const METHOD: reqwest::Method = reqwest::Method::GET;
@@ -183,9 +198,7 @@ pub mod get_clips {
 
         fn ready(&self) -> Result<(), RequestError<Self::ErrorCodes>> {
             if self.auth.is_none() {
-                Err(RequestError::MalformedRequest(
-                    "Must provide an authorization token".into(),
-                ))
+                Err(RequestError::MissingAuth)
             } else if let &QueryType::Unset = &self.query_type {
                 Err(RequestError::MalformedRequest(
                     "Must provide at least one of broadcaster_id, game_id, clip_id".into(),
@@ -221,7 +234,7 @@ pub mod get_clips {
         /// Set the broadcaster_id request
         ///
         /// Will replace current query type if already called `set_game_id` or `add_clip_id`
-        pub fn set_broadcaster_id<S: Into<String>>(&mut self, id: S) -> &mut Self {
+        pub fn set_broadcaster_id<S: Into<BroadcasterId>>(&mut self, id: S) -> &mut Self {
             self.query_type = QueryType::BroadCasterId(id.into());
             self
         }
@@ -229,7 +242,7 @@ pub mod get_clips {
         /// Set the game_id request
         ///
         /// Will replace current query type if already called `set_broadcaster_id` or `add_clip_id`
-        pub fn set_game_id<S: Into<String>>(&mut self, id: S) -> &mut Self {
+        pub fn set_game_id<S: Into<GameId>>(&mut self, id: S) -> &mut Self {
             self.query_type = QueryType::GameId(id.into());
             self
         }
@@ -237,7 +250,7 @@ pub mod get_clips {
         /// Add a clip_id to search for
         ///
         /// Will replace current query type if already called `set_broadcaster_id` or `set_game_id`
-        pub fn add_clip_id<S: Into<String>>(&mut self, id: S) -> &mut Self {
+        pub fn add_clip_id<S: Into<ClipId>>(&mut self, id: S) -> &mut Self {
             if let QueryType::ClipId(clips) = &mut self.query_type {
                 clips.push(id.into());
             } else {
@@ -251,7 +264,7 @@ pub mod get_clips {
         /// Will replace current query type if already called `set_broadcaster_id` or `set_game_id`
         pub fn set_clip_ids<S>(&mut self, set: Vec<S>) -> &mut Self
         where
-            S: Into<String>,
+            S: Into<ClipId>,
         {
             self.query_type = QueryType::ClipId(set.into_iter().map(Into::into).collect());
             self
@@ -268,8 +281,8 @@ pub mod get_clips {
         /// Sets the max amount of items to be returned from this request
         ///
         /// Without being set this value is 20
-        pub fn set_count(&mut self, count: u32) -> &mut Self {
-            self.count.replace(count);
+        pub fn set_count<C: Into<Count>>(&mut self, count: C) -> &mut Self {
+            self.count.replace(count.into());
             self
         }
 
@@ -284,8 +297,8 @@ pub mod get_clips {
         /// [`RFC3339`]: https://datatracker.ietf.org/doc/rfc3339
         pub fn set_period<S, T>(&mut self, started_at: S, ended_at: T) -> &mut Self
         where
-            S: Into<String>,
-            T: Into<String>,
+            S: Into<StartedAt>,
+            T: Into<EndedAt>,
         {
             self.period = Some((started_at.into(), Some(ended_at.into())));
             self
@@ -295,7 +308,7 @@ pub mod get_clips {
         /// window ends a week from this value
         pub fn set_started_at<S>(&mut self, started_at: S) -> &mut Self
         where
-            S: Into<String>,
+            S: Into<StartedAt>,
         {
             if let Some((start, _)) = &mut self.period {
                 *start = started_at.into();
@@ -307,7 +320,7 @@ pub mod get_clips {
 
         /// Set the end of the date/time window filter, if `set_started_at` not called before this
         /// then it does nothing as and end may not be set without a start
-        pub fn set_ended_at<S: Into<String>>(&mut self, ended_at: S) -> &mut Self {
+        pub fn set_ended_at<S: Into<EndedAt>>(&mut self, ended_at: S) -> &mut Self {
             if let Some((_, end)) = &mut self.period {
                 end.replace(ended_at.into());
             }
@@ -316,15 +329,15 @@ pub mod get_clips {
 
         /// Set the backwards pagination cursor for this request, use with Pagination
         /// from previous response
-        pub fn before(&mut self, before: Pagination) -> &mut Self {
-            self.pagination = PaginationDirection::Before(before.cursor);
+        pub fn before<P: Into<Pagination>>(&mut self, before: P) -> &mut Self {
+            self.pagination = PaginationDirection::Before(before.into());
             self
         }
 
         /// Set the forwards pagination cursor for this request, use with Pagination
         /// from previous response
-        pub fn after(&mut self, after: Pagination) -> &mut Self {
-            self.pagination = PaginationDirection::After(after.cursor);
+        pub fn after<P: Into<Pagination>>(&mut self, after: P) -> &mut Self {
+            self.pagination = PaginationDirection::After(after.into());
             self
         }
     }
@@ -334,16 +347,9 @@ pub mod get_clips {
     /// Response container from the Get Clips endpoint
     pub struct GetClipsResponse {
         #[serde(rename = "data")]
+        #[serde(default)]
         pub clips: Vec<ClipInfo>,
-        pub pagination: Option<Pagination>,
-    }
-
-    #[derive(Debug, Serialize, Deserialize)]
-    #[allow(missing_docs)]
-    /// Pagination information for list responses from twitch
-    ///
-    /// Can be used with request it was returned from to get next set of values
-    pub struct Pagination {
-        pub cursor: String,
+        /// The inner may be empty, indicating that there was not more than the value passed to [`GetClipsRequest::set_count`]
+        pub pagination: Pagination,
     }
 }
