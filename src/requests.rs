@@ -316,15 +316,18 @@ pub trait Request {
 
     /// Make the request represented by this object. Only makes request if [`Self::ready`] returns
     /// `Ok(())`.
-    async fn make_request(
+    async fn make_request<C>(
         &self,
-        client: &Client,
-    ) -> Result<Self::Response, RequestError<Self::ErrorCodes>> {
+        client: C,
+    ) -> Result<Self::Response, RequestError<Self::ErrorCodes>>
+    where
+        C: std::borrow::Borrow<Client> + Send,
+    {
         // Make sure request thinks that it is ready to be sent
         self.ready()?;
 
         // Build request with method and endpoint
-        let mut req = client.request(Self::METHOD, Self::ENDPOINT);
+        let mut req = client.borrow().request(Self::METHOD, Self::ENDPOINT);
 
         // add headers, body, and params
         req = self.headers().write_headers(req);

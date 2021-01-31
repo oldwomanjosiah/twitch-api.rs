@@ -21,7 +21,7 @@ async fn correct_auth_flow() {
     let error = match ClientAuthRequest::builder()
         .set_client_id(client_id)
         .set_client_secret(client_secret)
-        .make_request(&client)
+        .make_request(client)
         .await
     {
         Ok(resp) => {
@@ -63,7 +63,7 @@ async fn fail_on_client_id_not_set() {
 
     let error = match ClientAuthRequest::builder()
         .set_client_secret(client_secret)
-        .make_request(&client)
+        .make_request(client)
         .await
     {
         Ok(_) => unreachable!(

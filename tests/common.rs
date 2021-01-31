@@ -10,24 +10,24 @@ use tokio::runtime::Builder;
 
 lazy_static! {
     static ref CLIENT_SHARED: Arc<Client> = Arc::new(Client::new());
-    static ref GUARD: Arc<()> = {
+    static ref GUARD: () = {
         let _ = env_logger::builder().is_test(true).init();
-        Arc::new(())
+        ()
     };
 }
 
-pub async fn get_client_auth_token_correct() -> ClientAuthToken {
+pub async fn get_client_auth_token_correct() -> Arc<ClientAuthToken> {
     let (client_id, client_secret) = get_id_secret();
 
     let resp = ClientAuthRequest::builder()
         .set_client_id(client_id.clone())
         .set_client_secret(client_secret)
-        .make_request(client().as_ref())
+        .make_request(client())
         .await
         .ok()
         .expect("Did not get a sucessful response from the server");
 
-    ClientAuthToken::from_client(resp, client_id)
+    Arc::new(ClientAuthToken::from_client(resp, client_id))
 }
 
 pub fn client() -> Arc<Client> {
@@ -46,7 +46,5 @@ pub fn get_id_secret() -> (String, String) {
 }
 
 pub fn init() {
-    unsafe {
-        let _ = std::ptr::read_volatile(&GUARD).clone();
-    }
+    lazy_static::initialize(&GUARD);
 }

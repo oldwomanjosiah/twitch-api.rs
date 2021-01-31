@@ -17,7 +17,7 @@ async fn get_clips_success() {
     let broadaster_id = match GetUsersRequest::builder()
         .set_auth(client_auth_token.clone())
         .add_login("TheHoodlum12")
-        .make_request(client.clone().as_ref())
+        .make_request(client.clone())
         .await
     {
         Ok(resp) => resp.data[0].id.clone(),
@@ -27,7 +27,7 @@ async fn get_clips_success() {
     match GetClipsRequest::builder()
         .set_auth(client_auth_token.clone())
         .set_broadcaster_id(broadaster_id)
-        .make_request(client.clone().as_ref())
+        .make_request(client.clone())
         .await
     {
         Ok(resp) => {
@@ -58,7 +58,7 @@ async fn get_clips_by_id() {
     let broadaster_id = match GetUsersRequest::builder()
         .set_auth(client_auth_token.clone())
         .add_login("TheHoodlum12")
-        .make_request(client.clone().as_ref())
+        .make_request(client.clone())
         .await
     {
         Ok(resp) => resp.data[0].id.clone(),
@@ -70,7 +70,7 @@ async fn get_clips_by_id() {
         .add_clip_id("LuckyFriendlyPandaBabyRage".to_string())
         .add_clip_id("NurturingRealChimpanzeePRChase".to_string())
         .add_clip_id("ThoughtfulOriginalJuiceBCouch".to_string())
-        .make_request(client.clone().as_ref())
+        .make_request(client.clone())
         .await
     {
         Ok(resp) => {
