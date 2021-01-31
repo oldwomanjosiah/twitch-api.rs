@@ -53,6 +53,32 @@ where
     }
 }
 
+use crate::values::FieldValue;
+use crate::{field_wrapper_name, from_inner, quick_deref_into};
+use serde::{Deserialize, Serialize};
+
+#[repr(transparent)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(transparent)]
+/// Represents a [`crate::auth::client_credentials`] id.  
+/// See [`Twitch Auth Guide`] for more
+///
+/// [`Twitch Auth Guide`]: https://dev.twitch.tv/docs/authentication/getting-tokens-oauth#oauth-client-credentials-flow
+pub struct ClientId(String);
+
+#[repr(transparent)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(transparent)]
+/// Represents a [`crate::auth::client_credentials`] secret.  
+/// See [`Twitch Auth Guide`] for more
+///
+/// [`Twitch Auth Guide`]: https://dev.twitch.tv/docs/authentication/getting-tokens-oauth#oauth-client-credentials-flow
+pub struct ClientSecret(String);
+
+quick_deref_into![(ClientId, String), (ClientSecret, String)];
+from_inner![(ClientId, String), (ClientSecret, String)];
+field_wrapper_name![ClientId => "client_id", ClientSecret => "client_secret"];
+
 /// [`Implicit Code`] Flow
 ///
 /// [`Implicit Code`]: https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/#oauth-implicit-code-flow
@@ -100,6 +126,7 @@ pub mod authorization_code {}
 /// ```
 pub mod client_credentials {
 
+    use super::*;
     use crate::requests::*; // TODO: Replace with internal prelude
     use reqwest::RequestBuilder;
     use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
@@ -108,8 +135,8 @@ pub mod client_credentials {
     #[doc(hidden)]
     /// Do not use directly, instead use [`ClientAuthRequest`]
     pub struct ClientAuthRequestParams {
-        client_id: Option<String>,
-        client_secret: Option<String>,
+        client_id: Option<ClientId>,
+        client_secret: Option<ClientSecret>,
         scopes: Vec<String>, // TODO change to list of Scope Enum items or maybe bitset that has display trait and named bits
     }
 
@@ -193,25 +220,29 @@ pub mod client_credentials {
 
     impl ClientAuthRequest {
         /// Set the client_id
-        pub fn set_client_id(&mut self, client_id: String) -> &mut Self {
-            self.params.client_id.replace(client_id);
+        pub fn set_client_id<I: Into<ClientId>>(&mut self, client_id: I) -> &mut Self {
+            self.params.client_id.replace(client_id.into());
             self
         }
 
         /// Set the client_secret
-        pub fn set_client_secret(&mut self, client_secret: String) -> &mut Self {
-            self.params.client_secret.replace(client_secret);
+        pub fn set_client_secret<S: Into<ClientSecret>>(&mut self, client_secret: S) -> &mut Self {
+            self.params.client_secret.replace(client_secret.into());
             self
         }
     }
 
     /// Build a complete request from `(client_id, client_secret)`
-    impl From<(String, String)> for ClientAuthRequest {
-        fn from((client_id, client_secret): (String, String)) -> Self {
+    impl<I, S> From<(I, S)> for ClientAuthRequest
+    where
+        I: Into<ClientId>,
+        S: Into<ClientSecret>,
+    {
+        fn from((client_id, client_secret): (I, S)) -> Self {
             Self {
                 params: ClientAuthRequestParams {
-                    client_id: Some(client_id),
-                    client_secret: Some(client_secret),
+                    client_id: Some(client_id.into()),
+                    client_secret: Some(client_secret.into()),
                     scopes: vec![],
                 },
             }
