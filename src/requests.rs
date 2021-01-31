@@ -33,14 +33,16 @@ impl Body for None {
 
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize, Error)]
-#[error("Status error: {status} with message {message}")]
+#[derive(Debug, Deserialize)]
 /// Represents a sucessful request that was denied by the twitch api for some reason.
 /// Use request's associated [`ErrorCodes`] to get matchable value.
 pub struct FailureStatus<S>
 where
     S: DeserializeOwned + std::fmt::Display + std::fmt::Debug + 'static,
 {
+    /// Error message
+    pub error: Option<String>,
+
     #[serde(bound(deserialize = "S: DeserializeOwned"))]
     /// The status code of the Failure
     ///
@@ -49,6 +51,32 @@ where
 
     /// The message twitch sent with the error
     pub message: String,
+}
+
+impl<S> std::fmt::Display for FailureStatus<S>
+where
+    S: DeserializeOwned + std::fmt::Display + std::fmt::Debug + 'static,
+{
+    fn fmt(&self, w: &mut std::fmt::Formatter) -> std::fmt::Result {
+        if let Some(error) = &self.error {
+            write!(
+                w,
+                "Encountered error with code {}, error {}, and message {}",
+                self.status, error, self.message
+            )
+        } else {
+            write!(
+                w,
+                "Encountered error with code {}, and message {}",
+                self.status, self.message
+            )
+        }
+    }
+}
+
+impl<S> std::error::Error for FailureStatus<S> where
+    S: DeserializeOwned + std::fmt::Display + std::fmt::Debug + 'static
+{
 }
 
 impl<E: ErrorCodes> From<FailureStatus<u16>> for RequestError<E> {
@@ -91,6 +119,10 @@ where
 #[derive(Debug, Error)]
 /// Returned from a request when it could not be completed
 pub enum RequestError<C: ErrorCodes + 'static> {
+    #[error("You must provide valid authorization to this endpoint")]
+    /// Returned when this endpoint was not given a valid authorization key
+    MissingAuth,
+
     #[error("Request Malformed with message: {0}")]
     /// Could not try to make request because it was malformed in some way
     MalformedRequest(String),
@@ -151,6 +183,7 @@ macro_rules! response_codes {
                 match codes.status {
                 $(
                     $val => Ok(FailureStatus::<Self> {
+                        error: codes.error,
                         status: $item,
                         message: codes.message
                     }),
