@@ -61,7 +61,7 @@ async fn get_clips_by_id() {
         .make_request(client.clone())
         .await
     {
-        Ok(resp) => resp.data[0].id.clone(),
+        Ok(mut resp) => resp.data.remove(0).id,
         Err(e) => panic!("Could not get user id for TheHoodlum12 for reason {}", e),
     };
 
