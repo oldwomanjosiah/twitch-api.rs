@@ -30,6 +30,8 @@ pub mod get_users {
         Deserialize, Serialize,
     };
 
+    use crate::values::users::*;
+
     /// Request to the [`Get Users`] endpoint
     ///
     /// [`Get Users`]: https://dev.twitch.tv/docs/api/reference#get-users
@@ -41,13 +43,13 @@ pub mod get_users {
         A: AuthToken,
     {
         auth: Option<A>,
-        id: Vec<String>,
-        login: Vec<String>,
+        id: Vec<UserId>,
+        login: Vec<UserName>,
     }
 
     impl<A> Request for GetUsersRequest<A>
     where
-        A: AuthToken,
+        A: AuthToken + Send,
     {
         const ENDPOINT: &'static str = "https://api.twitch.tv/helix/users";
         const METHOD: reqwest::Method = reqwest::Method::GET;
@@ -82,9 +84,7 @@ pub mod get_users {
 
         fn ready(&self) -> Result<(), RequestError<Self::ErrorCodes>> {
             if self.auth.is_none() {
-                Err(RequestError::MalformedRequest(String::from(
-                    "You need to provide an auth",
-                )))
+                Err(RequestError::MissingAuth)
             } else if self.id.len() == 0 && self.login.len() == 0 {
                 Err(RequestError::MalformedRequest(String::from(
                     "At least one id or login must be provided",
@@ -110,7 +110,7 @@ pub mod get_users {
         }
 
         /// Add the id to the set of ids to be sent. May not have more than 100 ids and logins
-        pub fn add_id<S: Into<String>>(&mut self, id: S) -> &mut Self {
+        pub fn add_id<S: Into<UserId>>(&mut self, id: S) -> &mut Self {
             self.id.push(id.into());
             self
         }
@@ -126,9 +126,10 @@ pub mod get_users {
         /// req.set_ids(vec!["477906794"]);
         /// // ...
         /// ```
-        pub fn set_ids<S>(&mut self, ids: Vec<S>) -> &mut Self
+        pub fn set_ids<C, S>(&mut self, ids: C) -> &mut Self
         where
-            S: Into<String>,
+            C: IntoIterator<Item = S>,
+            S: Into<UserId>,
         {
             self.id = ids.into_iter().map(Into::into).collect();
             self
@@ -141,7 +142,7 @@ pub mod get_users {
         }
 
         /// Add the login to the set of logins to be sent. May not have more than 100 ids and logins
-        pub fn add_login<S: Into<String>>(&mut self, login: S) -> &mut Self {
+        pub fn add_login<S: Into<UserName>>(&mut self, login: S) -> &mut Self {
             self.login.push(login.into());
             self
         }
@@ -166,7 +167,7 @@ pub mod get_users {
         pub fn set_logins<C, S>(&mut self, logins: C) -> &mut Self
         where
             C: IntoIterator<Item = S>,
-            S: Into<String>,
+            S: Into<UserName>,
         {
             self.login = logins.into_iter().map(Into::into).collect();
             self
@@ -203,27 +204,31 @@ pub mod get_users {
         pub data: Vec<UserDescription>,
     }
 
+    use crate::values::broadcasters::*;
+    use crate::values::users::UserLogin;
+    use crate::values::{RFC3339Time, Url};
+
     #[derive(Debug, Serialize, Deserialize)]
     #[allow(missing_docs)]
     /// A single user datum returned by [`GetUsersRequest`]
     pub struct UserDescription {
-        pub broadcaster_type: String,
+        pub broadcaster_type: BroadcasterType,
         pub description: String,
-        pub display_name: String,
+        pub display_name: UserName,
 
         /// The email of the user, will only be returned if the access token provided
         /// has the [`scope`] 'user:read:email'
         ///
         /// [`scope`]: https://dev.twitch.tv/docs/authentication#scopes
-        pub email: Option<String>,
-        pub id: String,
-        pub login: String,
-        pub offline_image_url: String,
-        pub profile_image_url: String,
+        pub email: Option<UserEmail>,
+        pub id: UserId,
+        pub login: UserLogin,
+        pub offline_image_url: Url,
+        pub profile_image_url: Url,
 
         #[serde(rename = "type")]
-        user_type: String,
-        view_count: u64,
-        created_at: String,
+        user_type: UserType,
+        view_count: BroadcasterViews,
+        created_at: RFC3339Time,
     }
 }
