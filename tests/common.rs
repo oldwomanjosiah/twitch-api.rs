@@ -1,4 +1,5 @@
 use reqwest::Client;
+use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use twitch_api_rs::auth::client_credentials::ClientAuthToken;
 use twitch_api_rs::auth::client_credentials::*;
@@ -9,6 +10,10 @@ use tokio::runtime::Builder;
 
 lazy_static! {
     static ref CLIENT_SHARED: Arc<Client> = Arc::new(Client::new());
+    static ref GUARD: Arc<()> = {
+        let _ = env_logger::builder().is_test(true).init();
+        Arc::new(())
+    };
 }
 
 pub async fn get_client_auth_token_correct() -> ClientAuthToken {
@@ -41,5 +46,7 @@ pub fn get_id_secret() -> (String, String) {
 }
 
 pub fn init() {
-    let _ = env_logger::builder().is_test(true).init();
+    unsafe {
+        let _ = std::ptr::read_volatile(&GUARD).clone();
+    }
 }
