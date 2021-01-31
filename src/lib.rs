@@ -10,11 +10,24 @@
 pub mod auth;
 pub mod requests;
 pub mod resource;
+pub mod values;
 
 /// Common functions any types used in most application
 pub mod prelude {}
 
 mod crate_prelude {
+
+    pub use crate::auth::{self, AuthToken};
+    pub use crate::requests::*;
+    pub use reqwest::Method;
+
+    pub mod serde_derive {
+        pub use serde::{Deserialize, Serialize};
+    }
+    pub mod serde_impl {
+        pub use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
+    }
+
     pub fn as_space_list<'a, L, T>(l: L) -> String
     where
         L: AsRef<[T]>,
