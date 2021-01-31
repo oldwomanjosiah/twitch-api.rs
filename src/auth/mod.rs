@@ -4,9 +4,14 @@
 //!
 //! [`Twitch Auth Documentation`]: https://dev.twitch.tv/docs/authentication
 
+pub mod scopes;
+
 /// Represents a authorization token of some type that can be sent as a header to a
 /// twitch endpoint.
-pub trait AuthToken: crate::requests::Headers {}
+pub trait AuthToken: crate::requests::Headers {
+    /// Get the set of scopes that this token has associated with it
+    fn scopes(&self) -> &scopes::ScopeSet;
+}
 
 /// [`Implicit Code`] Flow
 ///
@@ -192,17 +197,23 @@ pub mod client_credentials {
         }
     }
 
+    use super::scopes::ScopeSet;
+
     /// Represents an authorization token header for requests
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub struct ClientAuthToken {
-        pub(crate) token: String,
-        pub(crate) client_id: String,
+        scopes: ScopeSet,
+        pub token: String,
+        pub client_id: String,
     }
 
     impl ClientAuthToken {
         /// Create the auth token from a sucessful auth response and a client_id
         pub fn from_client(auth_response: ClientAuthResponse, client_id: String) -> Self {
             Self {
+                // Fill with empty scopes item as scopes only apply to OAuth tokens
+                scopes: ScopeSet::new(),
                 token: auth_response.access_token,
                 client_id,
             }
@@ -216,5 +227,9 @@ pub mod client_credentials {
         }
     }
 
-    impl super::AuthToken for ClientAuthToken {}
+    impl super::AuthToken for ClientAuthToken {
+        fn scopes(&self) -> &ScopeSet {
+            &self.scopes
+        }
+    }
 }
