@@ -336,6 +336,8 @@ pub trait Request {
         // send
         let resp = req.send().await?;
 
+        log::info!("Got response {:#?}", resp);
+
         resp.json::<PossibleResponse<Self::Response>>()
             .await?
             .into_result()
