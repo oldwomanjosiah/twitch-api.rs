@@ -35,7 +35,8 @@ macro_rules! quick_deref_into {
             }
 
             impl $type {
-                fn into_inner(self) -> $inner {
+                /// Take the inner value of this object
+                pub fn into_inner(self) -> $inner {
                     self.0
                 }
             }
@@ -49,9 +50,9 @@ macro_rules! quick_deref_into {
 macro_rules! from_inner {
     ($(($type:ty, $inner:ty)),+) => {
         $(
-            impl From<$inner> for $type {
-                fn from(f: $inner) -> Self {
-                    Self(f)
+            impl<T: Into<$inner>> From<T> for $type {
+                fn from(f: T) -> Self {
+                    Self(f.into())
                 }
             }
         )*
@@ -72,6 +73,13 @@ pub mod broadcasters {
     /// The id number of a broadcaster object
     pub struct BroadcasterId(String);
 
+    use super::users::UserId;
+    impl From<UserId> for BroadcasterId {
+        fn from(u: UserId) -> Self {
+            Self(u.into_inner())
+        }
+    }
+
     #[repr(transparent)]
     #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
     #[serde(transparent)]
@@ -84,22 +92,40 @@ pub mod broadcasters {
     /// The language of a broadcaster object
     pub struct BroadcasterLanguage(ISOLanguage);
 
+    #[repr(transparent)]
+    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(transparent)]
+    /// The type of broadcaster: Affiliate, Partner, or empty
+    pub struct BroadcasterType(String);
+
+    #[repr(transparent)]
+    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(transparent)]
+    /// The total number of views on this broadcasters channel
+    pub struct BroadcasterViews(u64);
+
     field_wrapper_name![
         BroadcasterId => "broadcaster_id",
         BroadcasterName => "broadcaster_name",
-        BroadcasterLanguage => "broadcaster_language"
+        BroadcasterLanguage => "broadcaster_language",
+        BroadcasterType => "broadcaster_type",
+        BroadcasterViews => "view_count"
     ];
 
     quick_deref_into![
         (BroadcasterId, String),
         (BroadcasterName, String),
-        (BroadcasterLanguage, ISOLanguage)
+        (BroadcasterLanguage, ISOLanguage),
+        (BroadcasterType, String),
+        (BroadcasterViews, u64)
     ];
 
     from_inner![
         (BroadcasterId, String),
         (BroadcasterName, String),
-        (BroadcasterLanguage, ISOLanguage)
+        (BroadcasterLanguage, ISOLanguage),
+        (BroadcasterType, String),
+        (BroadcasterViews, u64)
     ];
 }
 
@@ -184,19 +210,62 @@ pub mod users {
     #[serde(transparent)]
     pub struct UserId(String);
 
+    use super::broadcasters::BroadcasterId;
+    impl From<BroadcasterId> for UserId {
+        fn from(b: BroadcasterId) -> Self {
+            Self(b.into_inner())
+        }
+    }
+
     #[repr(transparent)]
     #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
     #[serde(transparent)]
     pub struct UserName(String);
 
+    #[repr(transparent)]
+    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(transparent)]
+    /// the login name for this user
+    pub struct UserLogin(String);
+
+    #[repr(transparent)]
+    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(transparent)]
+    /// The type of this user: Staff, Admin, Global_Mod, or empty
+    pub struct UserType(String);
+
+    #[repr(transparent)]
+    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(transparent)]
+    /// The email of the user, generally only returned by a request if the access token
+    /// provided has the [`scope`] 'user:read:email'
+    ///
+    /// [`scope`]: https://dev.twitch.tv/docs/authentication#scopes
+    pub struct UserEmail(String);
+
     field_wrapper_name![
         UserId => "id",
-        UserName => "user_name"
+        UserName => "user_name",
+        UserLogin => "login",
+        UserType => "type",
+        UserEmail => "email"
     ];
 
-    quick_deref_into![(UserId, String), (UserName, String)];
+    quick_deref_into![
+        (UserId, String),
+        (UserName, String),
+        (UserLogin, String),
+        (UserType, String),
+        (UserEmail, String)
+    ];
 
-    from_inner![(UserId, String), (UserName, String)];
+    from_inner![
+        (UserId, String),
+        (UserName, String),
+        (UserLogin, String),
+        (UserType, String),
+        (UserEmail, String)
+    ];
 }
 
 pub mod videos {
