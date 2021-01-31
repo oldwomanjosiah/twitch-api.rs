@@ -21,11 +21,13 @@ mod crate_prelude {
         T: AsRef<str>,
     {
         let cap = l.as_ref().iter().fold(0, |a, e| a + e.as_ref().len());
-        l.as_ref()
-            .iter()
-            .fold(String::with_capacity(cap), |mut s, e| {
-                s.push_str(e.as_ref());
-                s
-            })
+        let mut l = l.as_ref().iter();
+        let mut s = String::with_capacity(cap);
+        s.push_str(l.next().unwrap().as_ref());
+        l.fold(s, |mut s, e| {
+            s.push_str("%20");
+            s.push_str(e.as_ref());
+            s
+        })
     }
 }
