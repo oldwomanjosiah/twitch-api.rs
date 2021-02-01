@@ -276,17 +276,20 @@ pub mod client_credentials {
     pub struct ClientAuthToken {
         scopes: ScopeSet,
         pub token: String,
-        pub client_id: String,
+        pub client_id: ClientId,
     }
 
     impl ClientAuthToken {
         /// Create the auth token from a sucessful auth response and a client_id
-        pub fn from_client(auth_response: ClientAuthResponse, client_id: String) -> Self {
+        pub fn from_client<C>(auth_response: ClientAuthResponse, client_id: C) -> Self
+        where
+            C: Into<ClientId>,
+        {
             Self {
                 // Fill with empty scopes item as scopes only apply to OAuth tokens
                 scopes: ScopeSet::new(),
                 token: auth_response.access_token,
-                client_id,
+                client_id: client_id.into(),
             }
         }
     }
@@ -294,7 +297,7 @@ pub mod client_credentials {
     impl Headers for ClientAuthToken {
         fn write_headers(&self, req: RequestBuilder) -> RequestBuilder {
             req.header("Authorization", format!("Bearer {}", self.token))
-                .header("Client-Id", &self.client_id)
+                .header("Client-Id", std::ops::Deref::deref(&self.client_id))
         }
     }
 
