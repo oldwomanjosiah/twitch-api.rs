@@ -11,6 +11,7 @@ keywords = ["twitch"]
 categories = ["api-bindings"]
 
 repository = "https://github.com/oldwomanjosiah/twitch-api.rs"
+documentation = "https://docs.rs/twitch-api-rs"
 readme = "readme.md"
 
 exclude = [
