@@ -16,7 +16,7 @@ See [Twitch API Reference](https://dev.twitch.tv/docs/)
 To get a list of clips from the twitch api, by a streamers dislplay name, there
 are 4 steps.
 
-1) Get an application ClientId and ClientSecret<sup>[1](#getting_credentials)<\sup>
+1) Get an application ClientId and ClientSecret <sup> [1](#getting_credentials) </sup>
 2) Request a client_flow Authentication Token
 3) Use that token to request information on a user by their display name
 4) Use the UserId returned by that request to request a list of clips associated
