@@ -31,6 +31,8 @@ async fn main() {
     use twitch_api_rs::prelude::*;
     use twitch_api_rs::auth::{ClientId, ClientSecret};
 
+	// Here we use the values that you should have gotten from step one
+
     let client_id: ClientId =
         env::var("TWITCH_API_RS_TEST_CLIENT_ID")
             .expect("Client Id environment variable not defined")
@@ -48,6 +50,8 @@ async fn main() {
     use twitch_api_rs::auth::client_credentials::{
         ClientAuthRequest, ClientAuthResponse, ClientAuthToken,
     };
+
+	// Step three
 
     // Get a client credentials (application) access token and wrap it in an arc
     // to be used across multiple tasks without repeating
@@ -69,6 +73,8 @@ async fn main() {
             }
     );
 
+	// Step three
+
     use twitch_api_rs::values::users::UserId;
     use twitch_api_rs::resource::users::get_users::*;
 
@@ -85,6 +91,8 @@ async fn main() {
                 Err(e) =>
                     panic!("Could not complete request for user by display name for reason {}", e),
             };
+
+	// Step four
 
     use twitch_api_rs::resource::clips::ClipInfo;
     use twitch_api_rs::resource::clips::get_clips::*;
