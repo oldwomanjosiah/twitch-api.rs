@@ -16,7 +16,7 @@
 ///         // ...
 ///     };
 ///
-/// for user in response.data.iter() {
+/// for user in response.users.iter() {
 ///     eprintln!("Found user with display name: {}", user.display_name);
 /// }
 /// ```
@@ -201,7 +201,8 @@ pub mod get_users {
     #[derive(Debug, Serialize, Deserialize)]
     #[allow(missing_docs)]
     pub struct GetUsersResponse {
-        pub data: Vec<UserDescription>,
+        #[serde(rename = "data")]
+        pub users: Vec<UserDescription>,
     }
 
     use crate::values::broadcasters::*;
