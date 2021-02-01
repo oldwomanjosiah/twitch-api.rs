@@ -58,7 +58,7 @@ use crate::{field_wrapper_name, from_inner, quick_deref_into};
 use serde::{Deserialize, Serialize};
 
 #[repr(transparent)]
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(transparent)]
 /// Represents a [`crate::auth::client_credentials`] id.  
 /// See [`Twitch Auth Guide`] for more
@@ -67,7 +67,7 @@ use serde::{Deserialize, Serialize};
 pub struct ClientId(String);
 
 #[repr(transparent)]
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(transparent)]
 /// Represents a [`crate::auth::client_credentials`] secret.  
 /// See [`Twitch Auth Guide`] for more
