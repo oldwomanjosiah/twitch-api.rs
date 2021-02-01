@@ -19,7 +19,7 @@ async fn get_channel_information() {
             .make_request(client.clone())
             .await
         {
-            Ok(mut resp) => resp.data.remove(0).id,
+            Ok(mut resp) => resp.users.remove(0).id,
             Err(e) => panic!("Could not get user information with reason {}", e),
         }
     };
