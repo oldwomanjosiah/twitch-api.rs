@@ -2,7 +2,11 @@
 [![Docs.rs](https://docs.rs/twitch-api-rs/badge.svg)](https://docs.rs/twitch-api-rs)
 [![Gihub Actions Testing CI](https://github.com/oldwomanjosiah/twitch-api.rs/workflows/Rust/badge.svg)](https://github.com/oldwomanjosiah/twitch-api.rs/actions?query=workflow%3ARust)
 
-Note: this library only covers the three apis on the critical path for my other project which [downloads all the clips for a user's channel](https://github.com/oldwomanjosiah/twitch-clip-downloader). Eventually I'd like to get to 100% coverage, at the very least for [Application Endpoints](https://dev.twitch.tv/docs/authentication#types-of-tokens).
+Note: As of right now this only covers 4/66 of the endpoints and 1/3 of the authorization flows.
+This is because the [original version](https://github.com/oldwomanjosiah/twitch-api.rs/releases/tag/cargo-0.1.0) was built for use in a small application made to [download all the clips associated with a broadcaster](https://github.com/oldwomanjosiah/twitch-clip-downloader).
+Version 0.2.0 moved to a trait based workflow to promote consistency between endpoints, as well as introducing transparent type wrappers on values consumed and created by the API to increase clarity on how the endpoints fit together.
+
+My goal right now is to cover 100% of the end points that require only an application authorization [(client auth flow)](https://dev.twitch.tv/docs/authentication#types-of-tokens), as the other types of authorization require spinning up a webserver to complete. This feels out of scope as of right now but may become a feature-gated use of the library in the future. 
 
 # twitch-api
 
