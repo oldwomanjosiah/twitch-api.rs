@@ -1,38 +1,39 @@
 [package]
 name = "twitch-api-rs"
 description = "An async binding on the twitch api (helix) using reqwest"
-version = "0.1.0"
+version = "0.2.0"
+
 authors = ["Josiah Hilden <jhilden13@gmail.com>"]
 edition = "2018"
+
 license = "GPL-3.0-or-later"
 keywords = ["twitch"]
 categories = ["api-bindings"]
+
 repository = "https://github.com/oldwomanjosiah/twitch-api.rs"
 readme = "readme.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[features]
-default = [ "requests" ]
-
-requests = [ "reqwest" ]
-blocking-requests = [ "reqwest/blocking" ]
-
 [dependencies]
-serde = { version = "1", features = [ "derive" ] }
-serde_json = "1"
-
-reqwest = { version = "0.10", features = [ "json", "rustls-tls", "trust-dns" ], optional = true }
-
-time = { version = "0.2", default-features = false, features = [ "std", "serde" ] }
-
-structopt = "0.3"
 log = "0.4"
+
+# For making requests
+serde = { version = "1", features = [ "derive" ] }
+reqwest = { version = "0.10", features = [ "json", "rustls-tls", "trust-dns" ] }
+
+# Error derives for enums
 thiserror = "^1"
 
+# Allow Async functions in traits
 async-trait = "^0.1"
 
 [dev-dependencies]
+# Pinned to version that is used by reqwest
 tokio = { version = "0.2", features = [ "full" ] }
+
+# Log values in tests
 env_logger = "0.8"
+
+# Allow for tests to share values that don't require async to compute
 lazy_static = "1.4"
