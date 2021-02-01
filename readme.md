@@ -9,14 +9,14 @@ Note: this library only covers the three apis on the critical path for my other 
 A twitch crate used to build and send requests to
 the twitch helix api.
 
-See [`Twitch API Reference`]
+See [Twitch API Reference](https://dev.twitch.tv/docs/)
 
 
 ### Example: Getting the top 20 clips from a creator
 To get a list of clips from the twitch api, by a streamers dislplay name, there
 are 4 steps.
 
-1) Get an application ClientId and ClientSecret [^getting_credentials]
+1) Get an application ClientId and ClientSecret<sup>[1](#getting_credentials)<\sup>
 2) Request a client_flow Authentication Token
 3) Use that token to request information on a user by their display name
 4) Use the UserId returned by that request to request a list of clips associated
@@ -117,16 +117,13 @@ async fn main() {
 }
 ```
 
-[^getting_credentials]: If you do not already have these then you will need to
-    log into your [`twitch developer console`], create and name a new application, and copy down
+<a name="getting_credentials">1</a>: If you do not already have these then you will need to
+    log into your [twitch developer console](https://dev.twitch.tv/console), create and name a new application, and copy down
     the associated values.  
     The client secret that you get from this process is imediately invalidated if you request a
     new one, and it will not be shown to you once you leave the page where you generate it, so
     make sure to write it down somewhere safe. It is recommended that you treat it like a
     password.
-
-[`twitch developer console`]: https://dev.twitch.tv/console
-[`Twitch API Reference`]: https://dev.twitch.tv/docs/
 
 ### Testing
 
