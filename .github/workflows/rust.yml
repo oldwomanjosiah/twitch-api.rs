@@ -11,8 +11,11 @@ env:
   RUST_LOG: debug 
 
 jobs:
-  stable:
-    environment: testing
+  builds-stable:
+    environment: Testing
+    env:
+      TWITCH_API_RS_TEST_CLIENT_ID: ${{ secrets.TWITCH_API_RS_TEST_CLIENT_ID }}
+      TWITCH_API_RS_TEST_CLIENT_SECRET: ${{ secrets.TWITCH_API_RS_TEST_CLIENT_SECRET }}
 
     runs-on: ubuntu-latest
 
