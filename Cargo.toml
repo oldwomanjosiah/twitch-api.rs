@@ -13,6 +13,11 @@ categories = ["api-bindings"]
 repository = "https://github.com/oldwomanjosiah/twitch-api.rs"
 readme = "readme.md"
 
+exclude = [
+	".github/",
+	"tests/"
+]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
