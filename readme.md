@@ -1,6 +1,6 @@
 [![Crates.io](https://img.shields.io/crates/v/twitch-api-rs?style=plastic)](https://crates.io/crates/twitch-api-rs)
 [![Docs.rs](https://docs.rs/twitch-api-rs/badge.svg)](https://docs.rs/twitch-api-rs)
-[![Docs-master](https://img.shields.io/badge/docs-master-blue)](https://oldwomanjosiah.github.io/twitch-api.rs/twitch_api_rs/)
+[![Docs-master](https://img.shields.io/badge/docs-master-blue)](https://oldwomanjosiah.github.io/twitch-api.rs/docs/)
 [![Gihub Actions Testing CI](https://github.com/oldwomanjosiah/twitch-api.rs/workflows/Rust/badge.svg)](https://github.com/oldwomanjosiah/twitch-api.rs/actions?query=workflow%3ARust)
 
 Note: As of right now this only covers 4/66 of the endpoints and 1/3 of the authorization flows.
