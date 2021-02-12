@@ -46,7 +46,6 @@ async fn get_clips_by_id() {
     common::init();
     use twitch_api_rs::requests::*;
     use twitch_api_rs::resource::clips::get_clips::*;
-    use twitch_api_rs::resource::users::get_users::*;
 
     let (client, client_auth_token) = (
         common::client(),
@@ -55,22 +54,12 @@ async fn get_clips_by_id() {
 
     log::info!("Got client and auth: {:?}", client_auth_token);
 
-    let broadaster_id = match GetUsersRequest::builder()
-        .set_auth(client_auth_token.clone())
-        .add_login("TheHoodlum12")
-        .make_request(client.clone())
-        .await
-    {
-        Ok(mut resp) => resp.users.remove(0).id,
-        Err(e) => panic!("Could not get user id for TheHoodlum12 for reason {}", e),
-    };
-
     match GetClipsRequest::builder()
         .set_auth(client_auth_token.clone())
         .add_clip_id("LuckyFriendlyPandaBabyRage".to_string())
         .add_clip_id("NurturingRealChimpanzeePRChase".to_string())
         .add_clip_id("ThoughtfulOriginalJuiceBCouch".to_string())
-        .make_request(client.clone())
+        .make_request(client)
         .await
     {
         Ok(resp) => {
