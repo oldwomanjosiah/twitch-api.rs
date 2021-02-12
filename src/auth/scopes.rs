@@ -97,161 +97,207 @@ macro_rules! ident {
 }
 // }}}
 
+/// Represents a single twitch Scope
+#[allow(missing_docs)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(usize)]
+pub enum Scope {
+    // General scopes
+    AnalyticsReadExtensions = 0,
+    AnalyticsReadGames,
+
+    BitsRead,
+
+    ChannelEditCommerial,
+    ChannelManageBroadcast,
+    ChannelManageExtensions,
+    ChannelManageRedemptions,
+    ChannelManageVideos,
+
+    ChannelReadEditors,
+    ChannelReadHypeTrain,
+    ChannelReadRedemptions,
+    ChannelReadStreamKey,
+    ChannelReadSubscriptions,
+
+    ClipsEdit,
+
+    ModerationRead,
+
+    UserEdit,
+    UserEditFollows,
+    UserReadBroadcast,
+    UserReadEmail,
+    UserReadBlockedUsers,
+
+    UserManageBlockedUsers,
+
+    // The following scopes are for for chat and PubSub
+    ChannelModerate,
+
+    ChannelEdit,
+    ChatRead,
+
+    WhispersRead,
+    WhispersEdit,
+}
+
+impl Scope {
+    const fn max() -> usize {
+        // WARNING: Must be updated to reflect the amount of scopes represented by Scope
+        26
+    }
+
+    /// Get the Twitch Scope Spec for an internal scope object
+    pub fn as_twitch_str(self) -> &'static str {
+        match self {
+            Self::AnalyticsReadExtensions => "analytics:read:extensions",
+            Self::AnalyticsReadGames => "analytics:read:games",
+            Self::BitsRead => "bits:read",
+            Self::ChannelEditCommerial => "channel:edit:commercial",
+            Self::ChannelManageBroadcast => "channel:manage:broadcast",
+            Self::ChannelManageExtensions => "channel:manage:extensions",
+            Self::ChannelManageRedemptions => "channel:manage:redemptions",
+            Self::ChannelManageVideos => "channel:manage:videos",
+            Self::ChannelReadEditors => "channel:read:editors",
+            Self::ChannelReadHypeTrain => "channel:read:hype_train",
+            Self::ChannelReadRedemptions => "channel:read:redemptions",
+            Self::ChannelReadStreamKey => "channel:read:stream_key",
+            Self::ChannelReadSubscriptions => "channel:read:subscriptions",
+            Self::ClipsEdit => "clips:edit",
+            Self::ModerationRead => "moderation:read",
+            Self::UserEdit => "user:edit",
+            Self::UserEditFollows => "user:edit:follows",
+            Self::UserReadBroadcast => "user:read:broadcast",
+            Self::UserReadEmail => "user:read:email",
+            Self::UserReadBlockedUsers => "user:read:blocked_users",
+            Self::UserManageBlockedUsers => "user:mange:blocked_users",
+            Self::ChannelModerate => "channel:moderate",
+            Self::ChannelEdit => "chat:edit",
+            Self::ChatRead => "chat:read",
+            Self::WhispersRead => "whispers:read",
+            Self::WhispersEdit => "whispers:edit",
+        }
+    }
+
+    /// Turn a Twitch Scope Spec into an internal scope object
+    pub fn from_twitch_str(ts: &str) -> Option<Self> {
+        match ts {
+            "analytics:read:extensions" => Some(Self::AnalyticsReadExtensions),
+            "analytics:read:games" => Some(Self::AnalyticsReadGames),
+            "bits:read" => Some(Self::BitsRead),
+            "channel:edit:commercial" => Some(Self::ChannelEditCommerial),
+            "channel:manage:broadcast" => Some(Self::ChannelManageBroadcast),
+            "channel:manage:extensions" => Some(Self::ChannelManageExtensions),
+            "channel:manage:redemptions" => Some(Self::ChannelManageRedemptions),
+            "channel:manage:videos" => Some(Self::ChannelManageVideos),
+            "channel:read:editors" => Some(Self::ChannelReadEditors),
+            "channel:read:hype_train" => Some(Self::ChannelReadHypeTrain),
+            "channel:read:redemptions" => Some(Self::ChannelReadRedemptions),
+            "channel:read:stream_key" => Some(Self::ChannelReadStreamKey),
+            "channel:read:subscriptions" => Some(Self::ChannelReadSubscriptions),
+            "clips:edit" => Some(Self::ClipsEdit),
+            "moderation:read" => Some(Self::ModerationRead),
+            "user:edit" => Some(Self::UserEdit),
+            "user:edit:follows" => Some(Self::UserEditFollows),
+            "user:read:broadcast" => Some(Self::UserReadBroadcast),
+            "user:read:email" => Some(Self::UserReadEmail),
+            "user:read:blocked_users" => Some(Self::UserReadBlockedUsers),
+            "user:mange:blocked_users" => Some(Self::UserManageBlockedUsers),
+            "channel:moderate" => Some(Self::ChannelModerate),
+            "chat:edit" => Some(Self::ChannelEdit),
+            "chat:read" => Some(Self::ChatRead),
+            "whispers:read" => Some(Self::WhispersRead),
+            "whispers:edit" => Some(Self::WhispersEdit),
+            _ => None,
+        }
+    }
+}
+
+use bitvec::prelude::BitArray;
+
 #[derive(Debug, Clone)]
 /// Represents a set of scopes available with a specific bearer auth key
 pub struct ScopeSet {
-    scopes: u32,
+    scopes: BitArray,
 }
 
 impl ScopeSet {
     /// Create a new empty set of scopes
     pub fn new() -> Self {
-        Self { scopes: 0 }
-    }
-
-    /// Get whether this type contains a single scope
-    pub fn get(&self, bit: usize) -> bool {
-        ((1 << bit) & self.scopes) > 0
-    }
-
-    /// Set a bit for a single scope, returns the old value
-    pub fn set(&mut self, bit: usize, val: bool) -> bool {
-        let old = self.get(bit);
-
-        let mask = (val as usize) << bit;
-
-        if val {
-            self.scopes |= mask as u32;
-        } else {
-            self.scopes &= !mask as u32;
-        }
-
-        old
-    }
-
-    /// Returns true if the set contains the scope specified  
-    /// Returns false if it does not or the scope does not exist
-    ///
-    /// ```
-    /// # use twitch_api_rs::auth::scopes::*;
-    /// let mut scopes = ScopeSet::new();
-    ///
-    /// scopes.set(2, true);
-    ///
-    /// assert!(scopes.contains("bits:read"));
-    ///
-    /// assert!(!scopes.contains("channel:edit:commercial"));
-    /// ```
-    pub fn contains(&self, scope: &str) -> bool {
-        if let Some(&scope) = Self::ident_from(scope) {
-            self.get(scope)
-        } else {
-            false
+        Self {
+            scopes: BitArray::zeroed(),
         }
     }
 
-    const fn count() -> usize {
-        26
+    #[allow(missing_docs)]
+    pub fn contains(&self, scope: Scope) -> bool {
+        *(self
+            .scopes
+            .get(scope as usize)
+            .expect("Could not get value from bitset, even though capacity should be large enough"))
     }
 
-    /// Get an iterator over scopes idents iterator
-    pub fn iter<'a>(&'a self) -> ScopesIter<'a> {
-        self.into_iter()
+    /// Ass a scope to the set, does nothing if the set already contains the scope
+    pub fn insert(&mut self, scope: Scope) {
+        self.scopes.set(scope as usize, true)
     }
 
-    ident!(
-        #[doc="Identity function for converting between scope internal number and twitch token string"]
-        pub <usize, str>: [
-            // General scopes
-            00 => "analytics:read:extensions",
-            01 => "analytics:read:games",
+    /// Remove a scope from the set, does nothing if the set does not contain the scope
+    pub fn remove(&mut self, scope: Scope) {
+        self.scopes.set(scope as usize, false)
+    }
 
-            02 => "bits:read",
-
-            03 => "channel:edit:commercial",
-            04 => "channel:manage:broadcast",
-            05 => "channel:manage:etensions",
-            06 => "channel:manage:redemptions",
-            07 => "channel:manage:videos",
-
-            08 => "channel:read:editors",
-            09 => "channel:read:hype_train",
-            10 => "channel:read:redemptions",
-            11 => "channel:read:stream_key",
-            12 => "channel:read:subscriptions",
-
-            13 => "clips:edit",
-
-            14 => "moderation:read",
-
-            15 => "user:edit",
-            16 => "user:edit:follows",
-            17 => "user:read:broadcast",
-            18 => "user:read:email",
-            19 => "user:read:blocked_users",
-
-            20 => "user:mange:blocked_users",
-
-            // The following scopes are for for chat and PubSub
-            21 => "channel:moderate",
-
-            22 => "chat:edit",
-            23 => "chat:read",
-
-            24 => "whispers:read",
-            25 => "whispers:edit"
-    ]);
+    /// Get a borrowing iterator over Self of Twitch Scope Specs
+    pub fn iter<'set>(&'set self) -> impl Iterator<Item = &'static str> + 'set {
+        ScopeIter {
+            cursor: 0,
+            set: &self,
+        }
+    }
 }
 
-impl<'a> IntoIterator for &'a ScopeSet {
-    type Item = &'static str;
-    type IntoIter = ScopesIter<'a>;
+struct ScopeIter<'set> {
+    cursor: usize,
+    set: &'set ScopeSet,
+}
 
-    fn into_iter(self) -> ScopesIter<'a> {
-        ScopesIter {
-            scopes: self,
-            cursor: 0,
+impl<'set> Iterator for ScopeIter<'set> {
+    type Item = &'static str;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.cursor < Scope::max() {
+            // SAFETY:
+            // This is safe because we know that self.cursor will never be >= Scope::max()
+            // which represents the largest usize that is a valid usize pattern that
+            // can be transumeted into a Scope variant
+            let current_scope: Scope = unsafe { std::mem::transmute(self.cursor) };
+
+            if self.set.contains(current_scope) {
+                self.cursor += 1;
+                return Some(current_scope.as_twitch_str());
+            } else {
+                self.cursor += 1;
+            }
         }
+        None
     }
 }
 
 impl<'a> std::iter::FromIterator<&'a str> for ScopeSet {
-    fn from_iter<I: IntoIterator<Item = &'a str>>(iter: I) -> Self {
-        let mut scopes = ScopeSet { scopes: 0 };
+    fn from_iter<I>(iter: I) -> Self
+    where
+        I: IntoIterator<Item = &'a str>,
+    {
+        let mut scope_set = ScopeSet::new();
 
         for maybe_scope in iter.into_iter() {
-            if let Some(&scope) = ScopeSet::ident_from(maybe_scope) {
-                scopes.set(scope, true);
+            if let Some(scope) = Scope::from_twitch_str(maybe_scope) {
+                scope_set.insert(scope);
             }
         }
 
-        scopes
-    }
-}
-
-#[derive(Debug)]
-/// Iterator type for scopes
-pub struct ScopesIter<'a> {
-    scopes: &'a ScopeSet,
-    cursor: u32,
-}
-
-impl<'a> Iterator for ScopesIter<'a> {
-    type Item = &'static str;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        while self.cursor < ScopeSet::count() as u32 {
-            if self.scopes.get(self.cursor as usize) {
-                let val: &'static str = ScopeSet::ident_to(&(self.cursor as usize))
-                    .expect("Tried to iterate over undefined value");
-                self.cursor += 1;
-                return Some(val);
-            } else {
-                self.cursor += 1;
-                continue;
-            }
-        }
-        None
+        scope_set
     }
 }
 
@@ -267,12 +313,12 @@ mod tests {
         let scopes: ScopeSet = list.into_iter().collect();
 
         assert!(
-            scopes.scopes & (1 << 15) as u32 > 0,
+            scopes.contains(Scope::UserEdit),
             "user:edit scope not set correctly"
         );
 
         assert!(
-            scopes.scopes & (1 << 08) as u32 > 0,
+            scopes.contains(Scope::ChannelReadEditors),
             "user:edit scope not set correctly"
         );
     }
@@ -299,11 +345,11 @@ mod tests {
     }
 
     #[test]
-    fn from_bits() {
+    fn piecewise() {
         let mut scopes = ScopeSet::new();
 
-        scopes.set(8, true);
-        scopes.set(15, true);
+        scopes.insert(Scope::UserEdit);
+        scopes.insert(Scope::ChannelReadEditors);
 
         let list: Vec<&'static str> = scopes.iter().collect();
 
@@ -311,6 +357,25 @@ mod tests {
         assert!(
             list.contains(&"channel:read:editors"),
             "Did not set channel:read:editors"
+        );
+    }
+
+    #[test]
+    fn removes() {
+        let mut scopes = ScopeSet::new();
+
+        scopes.insert(Scope::UserEdit);
+        scopes.insert(Scope::ChannelReadEditors);
+
+        scopes.remove(Scope::UserEdit);
+
+        assert!(
+            !scopes.contains(Scope::UserEdit),
+            "User Edit was not removed correctly"
+        );
+        assert!(
+            scopes.contains(Scope::ChannelReadEditors),
+            "Removed too many scopes"
         );
     }
 }

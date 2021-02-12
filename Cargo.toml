@@ -34,6 +34,8 @@ thiserror = "^1"
 # Allow Async functions in traits
 async-trait = "^0.1"
 
+bitvec = "0.20"
+
 [dev-dependencies]
 # Pinned to version that is used by reqwest
 tokio = { version = "0.2", features = [ "full" ] }
