@@ -29,6 +29,8 @@ jobs:
         env:
           # Enable the RustDoc `#[doc(cfg(...))]` attribute.
           RUSTDOCFLAGS: --cfg docsrs
+      - name: Prepare for Publish
+        run: ls -s twitch_api_rs docs
       - name: Deploy documentation
         if: success()
         uses: crazy-max/ghaction-github-pages@v1
