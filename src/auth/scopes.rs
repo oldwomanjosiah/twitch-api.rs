@@ -140,11 +140,13 @@ pub enum Scope {
 
     WhispersRead,
     WhispersEdit,
+    // SAFETY: New members must be accounted for in Scope::max(), as that must reflect the total
+    // count of enum variants
 }
 
 impl Scope {
     const fn max() -> usize {
-        // WARNING: Must be updated to reflect the amount of scopes represented by Scope
+        // SAFETY: Must be updated to reflect the amount of scopes represented by Scope
         26
     }
 
@@ -249,7 +251,15 @@ impl ScopeSet {
     }
 
     /// Get a borrowing iterator over Self of Twitch Scope Specs
-    pub fn iter<'set>(&'set self) -> impl Iterator<Item = &'static str> + 'set {
+    pub fn spec_iter<'set>(&'set self) -> impl Iterator<Item = &'static str> + 'set {
+        SpecIter(ScopeIter {
+            cursor: 0,
+            set: &self,
+        })
+    }
+
+    /// Get a borrowing iterator over Self of Scope Enum variants
+    pub fn scope_iter<'set>(&'set self) -> impl Iterator<Item = Scope> + 'set {
         ScopeIter {
             cursor: 0,
             set: &self,
@@ -257,30 +267,13 @@ impl ScopeSet {
     }
 }
 
-struct ScopeIter<'set> {
-    cursor: usize,
-    set: &'set ScopeSet,
-}
+struct SpecIter<'set>(ScopeIter<'set>);
 
-impl<'set> Iterator for ScopeIter<'set> {
+impl<'set> Iterator for SpecIter<'set> {
     type Item = &'static str;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while self.cursor < Scope::max() {
-            // SAFETY:
-            // This is safe because we know that self.cursor will never be >= Scope::max()
-            // which represents the largest usize that is a valid usize pattern that
-            // can be transumeted into a Scope variant
-            let current_scope: Scope = unsafe { std::mem::transmute(self.cursor) };
-
-            if self.set.contains(current_scope) {
-                self.cursor += 1;
-                return Some(current_scope.as_twitch_str());
-            } else {
-                self.cursor += 1;
-            }
-        }
-        None
+        self.0.next().map(Scope::as_twitch_str)
     }
 }
 
@@ -298,6 +291,33 @@ impl<'a> std::iter::FromIterator<&'a str> for ScopeSet {
         }
 
         scope_set
+    }
+}
+
+struct ScopeIter<'set> {
+    cursor: usize,
+    set: &'set ScopeSet,
+}
+
+impl<'set> Iterator for ScopeIter<'set> {
+    type Item = Scope;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.cursor < Scope::max() {
+            // SAFETY:
+            // This is safe because we know that self.cursor will never be >= Scope::max()
+            // which represents the largest usize that is a valid usize pattern that
+            // can be transumeted into a Scope variant
+            let current_scope: Scope = unsafe { std::mem::transmute(self.cursor) };
+
+            if self.set.contains(current_scope) {
+                self.cursor += 1;
+                return Some(current_scope);
+            } else {
+                self.cursor += 1;
+            }
+        }
+        None
     }
 }
 
@@ -329,7 +349,7 @@ mod tests {
 
         let scopes: ScopeSet = list.into_iter().collect();
 
-        let mut scopes_iter = scopes.iter();
+        let mut scopes_iter = scopes.spec_iter();
 
         assert_eq!(
             Some("channel:read:editors"),
@@ -351,7 +371,7 @@ mod tests {
         scopes.insert(Scope::UserEdit);
         scopes.insert(Scope::ChannelReadEditors);
 
-        let list: Vec<&'static str> = scopes.iter().collect();
+        let list: Vec<&'static str> = scopes.spec_iter().collect();
 
         assert!(list.contains(&"user:edit"), "Did not set user:edits");
         assert!(
