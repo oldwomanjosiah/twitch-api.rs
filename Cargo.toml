@@ -34,11 +34,9 @@ thiserror = "^1"
 # Allow Async functions in traits
 async-trait = "^0.1"
 
-bitvec = "0.20"
-
 [dev-dependencies]
 # Pinned to version that is used by reqwest
-tokio = { version = "^1.0", features = [ "full" ] }
+tokio = { version = "^1.2", features = [ "full" ] }
 
 # Log values in tests
 env_logger = "0.8"
