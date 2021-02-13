@@ -216,12 +216,12 @@ impl Scope {
     }
 }
 
-use bitvec::prelude::BitArray;
+use bitvec::prelude::{BitArray, Lsb0};
 
 #[derive(Debug, Clone)]
 /// Represents a set of scopes available with a specific bearer auth key
 pub struct ScopeSet {
-    scopes: BitArray,
+    scopes: BitArray<Lsb0, usize>,
 }
 
 impl ScopeSet {
