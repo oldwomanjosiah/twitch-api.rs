@@ -216,38 +216,31 @@ impl Scope {
     }
 }
 
-use bitvec::prelude::BitArray;
-
 #[derive(Debug, Clone)]
 /// Represents a set of scopes available with a specific bearer auth key
 pub struct ScopeSet {
-    scopes: BitArray,
+    scopes: usize,
 }
 
 impl ScopeSet {
     /// Create a new empty set of scopes
     pub fn new() -> Self {
-        Self {
-            scopes: BitArray::zeroed(),
-        }
+        Self { scopes: 0 }
     }
 
     #[allow(missing_docs)]
     pub fn contains(&self, scope: Scope) -> bool {
-        *(self
-            .scopes
-            .get(scope as usize)
-            .expect("Could not get value from bitset, even though capacity should be large enough"))
+        self.scopes & (1 << scope as usize) > 0
     }
 
     /// Ass a scope to the set, does nothing if the set already contains the scope
     pub fn insert(&mut self, scope: Scope) {
-        self.scopes.set(scope as usize, true)
+        self.scopes |= 1 << scope as usize;
     }
 
     /// Remove a scope from the set, does nothing if the set does not contain the scope
     pub fn remove(&mut self, scope: Scope) {
-        self.scopes.set(scope as usize, false)
+        self.scopes &= !(1 << scope as usize);
     }
 
     /// Get a borrowing iterator over Self of Twitch Scope Specs

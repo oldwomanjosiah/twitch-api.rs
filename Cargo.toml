@@ -26,7 +26,7 @@ log = "0.4"
 
 # For making requests
 serde = { version = "1", features = [ "derive" ] }
-reqwest = { version = "0.10", features = [ "json", "rustls-tls", "trust-dns" ] }
+reqwest = { version = "0.11", features = [ "json", "rustls-tls", "trust-dns" ] }
 
 # Error derives for enums
 thiserror = "^1"
@@ -34,11 +34,9 @@ thiserror = "^1"
 # Allow Async functions in traits
 async-trait = "^0.1"
 
-bitvec = "0.20"
-
 [dev-dependencies]
 # Pinned to version that is used by reqwest
-tokio = { version = "0.2", features = [ "full" ] }
+tokio = { version = "^1.2", features = [ "full" ] }
 
 # Log values in tests
 env_logger = "0.8"
