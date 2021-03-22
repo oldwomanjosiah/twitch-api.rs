@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["twitch_api_rs"] = [{"text":"impl Copy for Scope","synthetic":false,"types":[]},{"text":"impl Copy for ScopeSet","synthetic":false,"types":[]},{"text":"impl Copy for CommonResponseCodes","synthetic":false,"types":[]},{"text":"impl Copy for ViewCount","synthetic":false,"types":[]},{"text":"impl Copy for Count","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

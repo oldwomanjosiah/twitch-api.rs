@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["twitch_api_rs"] = [{"text":"impl&lt;S&gt; Display for FailureStatus&lt;S&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;S: DeserializeOwned + Display + Debug + 'static,&nbsp;</span>","synthetic":false,"types":[]},{"text":"impl&lt;C:&nbsp;ErrorCodes + 'static&gt; Display for RequestError&lt;C&gt;","synthetic":false,"types":[]},{"text":"impl Display for CommonResponseCodes","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

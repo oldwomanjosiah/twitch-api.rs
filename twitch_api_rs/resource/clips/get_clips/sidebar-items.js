@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["GetClipsRequest","Request builder for the `Get Clips` endpoint"],["GetClipsResponse","Response container from the Get Clips endpoint"]]});

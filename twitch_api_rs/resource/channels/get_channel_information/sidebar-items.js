@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["ChannelInformation","Represents a single channel object"],["GetChannelInformationRequest","Request builder for the `Get Channel Information` endpoint"],["GetChannelInformationResponse","Represents a response from a sucessful request to the get channel information endpoint"]]});

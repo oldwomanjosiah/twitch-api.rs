@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["GameId","The ID number of a game on twitch"],["GameName",""]]});

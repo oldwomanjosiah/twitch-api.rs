@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["get_channel_information","Request to the `Get Channel Information` endpoint"]]});

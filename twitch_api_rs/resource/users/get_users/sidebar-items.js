@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["GetUsersRequest","Request to the `Get Users` endpoint"],["GetUsersResponse","A Collection of response items returned by [`GetUsersRequest`]"],["UserDescription","A single user datum returned by [`GetUsersRequest`]"]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["get_clips","Request to the `Get Clips` endpoint"]],"struct":[["ClipInfo","Information relating to a single clip resource"]]});

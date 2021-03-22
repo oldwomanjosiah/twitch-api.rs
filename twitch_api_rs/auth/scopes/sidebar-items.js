@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Scope","Represents a single twitch Scope"]],"struct":[["ScopeSet","Represents a set of scopes available with a specific bearer auth key"]]});

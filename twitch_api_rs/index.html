@@ -1,0 +1,137 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `twitch_api_rs` crate."><meta name="keywords" content="rust, rustlang, rust-lang, twitch_api_rs"><title>twitch_api_rs - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu.css" disabled ><script id="default-settings"></script><script src="../storage.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../twitch_api_rs/index.html'><div class='logo-container rust-logo'><img src='../rust-logo.png' alt='logo'></div></a><p class="location">Crate twitch_api_rs</p><div class="block version"><p>Version 0.3.0</p></div><div class="sidebar-elems"><a id="all-types" href="all.html"><p>See all twitch_api_rs's items</p></a><div class="block items"><ul><li><a href="#modules">Modules</a></li><li><a href="#macros">Macros</a></li></ul></div><p class="location"></p><script>window.sidebarCurrent = {name: "twitch_api_rs", ty: "mod", relpath: "../"};</script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
+                <a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/twitch_api_rs/lib.rs.html#2-170" title="goto source code">[src]</a></span><span class="in-band">Crate <a class="mod" href="">twitch_api_rs</a></span></h1><div class="docblock"><p><a href="https://crates.io/crates/twitch-api-rs"><img src="https://img.shields.io/crates/v/twitch-api-rs?style=plastic" alt="Crates.io" /></a>
+<a href="https://github.com/oldwomanjosiah/twitch-api.rs/actions?query=workflow%3ARust"><img src="https://github.com/oldwomanjosiah/twitch-api.rs/workflows/Rust/badge.svg" alt="Gihub Actions Testing CI" /></a></p>
+<p>A twitch crate used to build and send requests to
+the twitch helix api.</p>
+<p>See <a href="https://dev.twitch.tv/docs/"><code>Twitch API Reference</code></a></p>
+<h3 id="example-getting-the-top-20-clips-from-a-creator" class="section-header"><a href="#example-getting-the-top-20-clips-from-a-creator">Example: Getting the top 20 clips from a creator</a></h3>
+<p>To get a list of clips from the twitch api, by a streamers dislplay name, there
+are 4 steps.</p>
+<ol>
+<li>Get an application ClientId and ClientSecret <sup id="fnref1"><a href="#fn1">1</a></sup></li>
+<li>Request a client_flow Authentication Token</li>
+<li>Use that token to request information on a user by their display name</li>
+<li>Use the UserId returned by that request to request a list of clips associated
+with their channel.</li>
+</ol>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="attribute">#[<span class="ident">tokio</span>::<span class="ident">main</span>]</span>
+<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">main</span>() {
+    <span class="kw">use</span> <span class="ident">twitch_api_rs</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
+    <span class="kw">use</span> <span class="ident">twitch_api_rs</span>::<span class="ident">auth</span>::{<span class="ident">ClientId</span>, <span class="ident">ClientSecret</span>};
+
+    <span class="comment">// Here we use the values that you should have gotten from step one</span>
+
+    <span class="kw">let</span> <span class="ident">client_id</span>: <span class="ident">ClientId</span> <span class="op">=</span>
+        <span class="ident">env</span>::<span class="ident">var</span>(<span class="string">&quot;TWITCH_API_RS_TEST_CLIENT_ID&quot;</span>)
+            .<span class="ident">expect</span>(<span class="string">&quot;Client Id environment variable not defined&quot;</span>)
+            .<span class="ident">into</span>();
+
+    <span class="kw">let</span> <span class="ident">client_secret</span>: <span class="ident">ClientSecret</span> <span class="op">=</span>
+        <span class="ident">env</span>::<span class="ident">var</span>(<span class="string">&quot;TWITCH_API_RS_TEST_CLIENT_SECRET&quot;</span>)
+            .<span class="ident">expect</span>(<span class="string">&quot;Client Secret environment variable not defined&quot;</span>)
+            .<span class="ident">into</span>();
+
+    <span class="comment">// Make a reqwest client to send the requests, and wrap it in an arc so it</span>
+    <span class="comment">// can be reused in multiple futures</span>
+    <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">reqwest</span>::<span class="ident">Client</span>::<span class="ident">new</span>());
+
+    <span class="kw">use</span> <span class="ident">twitch_api_rs</span>::<span class="ident">auth</span>::<span class="ident">client_credentials</span>::{
+        <span class="ident">ClientAuthRequest</span>, <span class="ident">ClientAuthResponse</span>, <span class="ident">ClientAuthToken</span>,
+    };
+
+    <span class="comment">// Step 2</span>
+
+    <span class="comment">// Get a client credentials (application) access token and wrap it in an arc</span>
+    <span class="comment">// to be used across multiple tasks without repeating</span>
+    <span class="kw">let</span> <span class="ident">auth_token</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">ClientAuthToken</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(
+        <span class="kw">match</span> <span class="ident">ClientAuthRequest</span>::<span class="ident">builder</span>()
+            .<span class="ident">set_client_id</span>(<span class="ident">client_id</span>.<span class="ident">clone</span>())
+            .<span class="ident">set_client_secret</span>(<span class="ident">client_secret</span>)
+            .<span class="ident">make_request</span>(<span class="ident">client</span>.<span class="ident">clone</span>())
+            .<span class="kw">await</span> {
+                <span class="prelude-val">Ok</span>(<span class="ident">resp</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="comment">// Create the token from the token value provided by twitch and</span>
+                    <span class="comment">// your client_id</span>
+                    <span class="ident">ClientAuthToken</span>::<span class="ident">from_client</span>(<span class="ident">resp</span>, <span class="ident">client_id</span>)
+                }
+
+                <span class="comment">// Better error handling can be performed here by matching against</span>
+                <span class="comment">// the type of this requests::RequestError. Elided for conciseness</span>
+                <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Could not complete auth request for reason {}&quot;</span>, <span class="ident">e</span>),
+            }
+    );
+
+    <span class="comment">// Step 3</span>
+
+    <span class="kw">use</span> <span class="ident">twitch_api_rs</span>::<span class="ident">values</span>::<span class="ident">users</span>::<span class="ident">UserId</span>;
+    <span class="kw">use</span> <span class="ident">twitch_api_rs</span>::<span class="ident">resource</span>::<span class="ident">users</span>::<span class="ident">get_users</span>::<span class="kw-2">*</span>;
+
+    <span class="comment">// Notice that we get a Vec&lt;UserId&gt; here, as this endpoint allows you to query</span>
+    <span class="comment">// for multiple users at once</span>
+    <span class="kw">let</span> <span class="ident">user_ids</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">UserId</span><span class="op">&gt;</span> <span class="op">=</span>
+        <span class="kw">match</span> <span class="ident">GetUsersRequest</span>::<span class="ident">builder</span>()
+            .<span class="ident">set_auth</span>(<span class="ident">auth_token</span>.<span class="ident">clone</span>())
+            .<span class="ident">add_login</span>(<span class="string">&quot;TheHoodlum12&quot;</span>)
+            .<span class="ident">make_request</span>(<span class="ident">client</span>.<span class="ident">clone</span>())
+            .<span class="kw">await</span> {
+                <span class="prelude-val">Ok</span>(<span class="kw-2">mut</span> <span class="ident">resp</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="ident">resp</span>.<span class="ident">users</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">i</span><span class="op">|</span> <span class="ident">i</span>.<span class="ident">id</span>).<span class="ident">collect</span>()
+                }
+
+                <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span>
+                    <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Could not complete request for user by display name for reason {}&quot;</span>, <span class="ident">e</span>),
+            };
+
+    <span class="comment">// Step 4</span>
+
+    <span class="kw">use</span> <span class="ident">twitch_api_rs</span>::<span class="ident">resource</span>::<span class="ident">clips</span>::<span class="ident">ClipInfo</span>;
+    <span class="kw">use</span> <span class="ident">twitch_api_rs</span>::<span class="ident">resource</span>::<span class="ident">clips</span>::<span class="ident">get_clips</span>::<span class="kw-2">*</span>;
+    <span class="kw">use</span> <span class="ident">twitch_api_rs</span>::<span class="ident">values</span>::<span class="ident">clips</span>::<span class="ident">ClipTitle</span>;
+
+    <span class="kw">for</span> <span class="ident">user_id</span> <span class="kw">in</span> <span class="ident">user_ids</span> {
+        <span class="kw">let</span> <span class="ident">auth_token</span> <span class="op">=</span> <span class="ident">auth_token</span>.<span class="ident">clone</span>();
+        <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">client</span>.<span class="ident">clone</span>();
+
+        <span class="ident">tokio</span>::<span class="ident">spawn</span>(<span class="kw">async</span> <span class="kw">move</span> {
+            <span class="kw">match</span> <span class="ident">GetClipsRequest</span>::<span class="ident">builder</span>()
+                .<span class="ident">set_auth</span>(<span class="ident">auth_token</span>)
+                .<span class="ident">set_broadcaster_id</span>(<span class="ident">user_id</span>.<span class="ident">clone</span>())
+                .<span class="ident">make_request</span>(<span class="ident">client</span>)
+                .<span class="kw">await</span> {
+                    <span class="prelude-val">Ok</span>(<span class="ident">resp</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                        <span class="comment">// Print out the response</span>
+                        <span class="kw">for</span> <span class="ident">clip</span> <span class="kw">in</span> <span class="ident">resp</span>.<span class="ident">clips</span> {
+                            <span class="macro">eprintln</span><span class="macro">!</span>(
+                                <span class="string">&quot;Found clip for broadcaster {:?} titled {:?}&quot;</span>,
+                                <span class="kw-2">&amp;</span><span class="ident">user_id</span>, <span class="ident">clip</span>.<span class="ident">title</span>
+                            );
+                        }
+                    }
+                    <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span>
+                        <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Could not get clips for user {:?} for reason {}&quot;</span>, <span class="ident">user_id</span>, <span class="ident">e</span>),
+                }
+        });
+    }
+}</pre></div>
+<div class="footnotes"><hr><ol><li id="fn1"><p>If you do not already have these then you will need to
+log into your <a href="https://dev.twitch.tv/console"><code>twitch developer console</code></a>, create and name a new application, and copy down
+the associated values.<br />
+The client secret that you get from this process is imediately invalidated if you request a
+new one, and it will not be shown to you once you leave the page where you generate it, so
+make sure to write it down somewhere safe. It is recommended that you treat it like a
+password.&nbsp;<a href="#fnref1" rev="footnote">↩</a></p></li></ol></div></div><h2 id="modules" class="section-header"><a href="#modules">Modules</a></h2>
+<table><tr class="module-item"><td><a class="mod" href="auth/index.html" title="twitch_api_rs::auth mod">auth</a></td><td class="docblock-short"><p>Types and functions for auth flows</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="prelude/index.html" title="twitch_api_rs::prelude mod">prelude</a></td><td class="docblock-short"><p>Common functions and types used in most application</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="requests/index.html" title="twitch_api_rs::requests mod">requests</a></td><td class="docblock-short"><p>Common traits used to construct requestable types</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="resource/index.html" title="twitch_api_rs::resource mod">resource</a></td><td class="docblock-short"><p>All endpoints organized by which resource they are in relation to.<br />
+See the <a href="https://dev.twitch.tv/docs/api/reference"><code>API Reference</code></a> for a list of all resources.</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="values/index.html" title="twitch_api_rs::values mod">values</a></td><td class="docblock-short"><p>Wrappers for basic owned types that indicate their usage</p>
+</td></tr></table><h2 id="macros" class="section-header"><a href="#macros">Macros</a></h2>
+<table><tr class="module-item"><td><a class="macro" href="macro.ident.html" title="twitch_api_rs::ident macro">ident</a></td><td class="docblock-short"><p>Create identity functions for Eq types</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.response_codes.html" title="twitch_api_rs::response_codes macro">response_codes</a></td><td class="docblock-short"><p>Generate a <a href="../twitch_api_rs/requests/trait.ErrorCodes.html" title="ErrorCodes"><code>ErrorCodes</code></a> impl block for a given Enum by mapping known status codes
+to specific variants. Variants must not be struct variants</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../";window.currentCrate = "twitch_api_rs";</script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>

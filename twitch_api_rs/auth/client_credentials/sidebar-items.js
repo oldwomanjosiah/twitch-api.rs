@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["ClientAuthRequest","Request for the `client authentication` flow. See module level documentation for usage."],["ClientAuthResponse","Response from a successful [`ClientAuthRequest`]"],["ClientAuthToken","Represents an authorization token header for requests"]]});

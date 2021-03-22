@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["ExtensionId","The id assined to an extension when it was created"]]});
