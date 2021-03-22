@@ -292,6 +292,15 @@ pub mod client_credentials {
                 client_id: client_id.into(),
             }
         }
+
+        /// Create a new ClientAuthToken
+        pub fn new(token: String, id: impl Into<ClientId>) -> Self {
+            Self {
+                scopes: ScopeSet::new(),
+                token,
+                client_id: id.into(),
+            }
+        }
     }
 
     impl Headers for ClientAuthToken {

@@ -216,7 +216,7 @@ impl Scope {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 /// Represents a set of scopes available with a specific bearer auth key
 pub struct ScopeSet {
     scopes: usize,
@@ -230,7 +230,7 @@ impl ScopeSet {
 
     #[allow(missing_docs)]
     pub fn contains(&self, scope: Scope) -> bool {
-        self.scopes & (1 << scope as usize) > 0
+        self.scopes & (1 << scope as usize) != 0
     }
 
     /// Ass a scope to the set, does nothing if the set already contains the scope

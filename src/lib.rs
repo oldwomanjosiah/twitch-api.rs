@@ -138,6 +138,7 @@
 #![cfg_attr(feature = "nightly", feature(doc_spotlight))]
 
 pub mod auth;
+mod client;
 pub mod requests;
 pub mod resource;
 pub mod values;
